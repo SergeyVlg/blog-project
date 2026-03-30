@@ -1,0 +1,72 @@
+﻿syntax = "proto3";
+
+package blog;
+
+service BlogService {
+  rpc Register(RegisterRequest) returns (User);
+  rpc Login(LoginRequest) returns (User);
+  rpc CreatePost(CreatePostRequest) returns (CreatePostResponse);
+  rpc GetPost(GetPostRequest) returns (GetPostResponse);
+  rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse);
+  rpc DeletePost(DeletePostRequest) returns (DeletePostResponse);
+  rpc ListPosts(ListPostsRequest) returns (stream ListPostsResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message User {
+  string email = 1;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message CreatePostRequest {
+  string title = 1;
+  string content = 2;
+}
+
+message CreatePostResponse {
+  string id = 1;
+}
+
+message GetPostRequest {
+  string id = 1;
+}
+
+message GetPostResponse {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message UpdatePostRequest {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message UpdatePostResponse {
+  string id = 1;
+}
+
+message DeletePostRequest {
+  string id = 1;
+}
+
+message DeletePostResponse {
+  string id = 1;
+}
+
+message ListPostsRequest {}
+
+message ListPostsResponse {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}

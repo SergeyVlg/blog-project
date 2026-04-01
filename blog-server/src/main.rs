@@ -7,7 +7,8 @@ mod infrastructure;
 use std::io::Error;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use infrastructure::{logging };//, config::Config, migrate};
+
+use infrastructure::{logging, config::Config };//, config::Config, migrate};
 use sqlx::postgres::PgPoolOptions;
 //use infrastructure::logging::init_logging;
 
@@ -18,7 +19,7 @@ async fn main() -> std::io::Result<()> {
 
     tracing::info!("Starting server...");
 
-    //let cfg = Config::from_env().expect("invalid config");
+    let cfg = Config::from_env().expect("invalid config"); //TODO убрать expect
 
     /*let pool = PgPoolOptions::new()
         .max_connections(10)

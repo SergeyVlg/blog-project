@@ -20,7 +20,7 @@ async-trait = "0.1.89"
 argon2 = "0.6.0-rc.8"
 password-hash = "0.6.0"
 jsonwebtoken = "10.3.0"
-rand_core = "0.9.5"
+thiserror = "2.0.18"
 
 [build-dependencies]
 tonic-build = "0.14.5"

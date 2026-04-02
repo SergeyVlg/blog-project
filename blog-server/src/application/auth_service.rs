@@ -1,6 +1,7 @@
 ﻿use std::sync::Arc;
 use tracing::instrument;
 use crate::data::user_repository::UserRepository;
+use crate::domain::error::AuthError;
 use crate::domain::user::User;
 use crate::infrastructure::jwt::{JwtKeys};
 use crate::infrastructure::jwt as jwt;
@@ -15,7 +16,7 @@ impl<R> AuthService<R>
 where
     R: UserRepository/* + 'static*/,
 {
-    pub fn new(repo: Arc<R>, keys: JwtKeys) -> Self {
+    /*pub fn new(repo: Arc<R>, keys: JwtKeys) -> Self {
         Self { repo, keys }
     }
 
@@ -29,32 +30,33 @@ where
             .await
             .map_err(BankError::from)?
             .ok_or_else(|| BankError::NotFound(format!("user {}", id)))
+    }*/
+
+    #[instrument(skip(self))]
+    pub async fn register(&self, name: String, email: String, password: String) -> Result<User, AuthError> {
+        let hash = jwt::hash_password(&password).map_err(|err| AuthError::Internal(err.to_string()))?;
+        let user = User::new(name, email.to_lowercase(), hash);
+        self.repo.create(user).await.map_err(AuthError::from)
     }
 
     #[instrument(skip(self))]
-    pub async fn register(&self, email: String, password: String) -> Result<User, BankError> {
-        let hash = jwt::hash_password(&password).map_err(|err| BankError::Internal(err.to_string()))?;
-        let user = User::new(email.to_lowercase(), hash);
-        self.repo.create(user).await.map_err(BankError::from)
-    }
-
-    #[instrument(skip(self))]
-    pub async fn login(&self, email: &str, password: &str) -> Result<String, BankError> {
+    pub async fn login(&self, email: &str, password: &str) -> Result<String, AuthError> {
         let user = self
             .repo
             .find_by_email(&email.to_lowercase())
             .await
-            .map_err(BankError::from)?
-            .ok_or_else(|| BankError::Unauthorized)?;
+            .map_err(AuthError::from)?
+            .ok_or_else(|| AuthError::NotFound)?;
 
         let valid = jwt::verify_password(password, &user.password_hash)
-            .map_err(|_| BankError::Unauthorized)?;
+            .map_err(|_| AuthError::Unauthorized)?;
+
         if !valid {
-            return Err(BankError::Unauthorized);
+            return Err(AuthError::Unauthorized);
         }
 
         self.keys
-            .generate_token(user.id)
-            .map_err(|err| BankError::Internal(err.to_string()))
+            .generate_token(user.id, user.name)
+            .map_err(|err| AuthError::Internal(err.to_string()))
     }
 }

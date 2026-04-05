@@ -1,6 +1,8 @@
 ﻿use chrono::{Utc, DateTime};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct User {
     pub id: Uuid,
     pub name: String,
@@ -18,5 +20,16 @@ impl User {
             password_hash,
             created_at: Utc::now(),
         }
+    }
+}
+
+pub(crate) struct UserWithToken {
+    pub user: User,
+    pub token: String,
+}
+
+impl UserWithToken {
+    pub fn new(user: User, token: String) -> Self {
+        Self { user, token }
     }
 }

@@ -2,12 +2,12 @@
 use tracing::instrument;
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AuthError;
-use crate::domain::user::User;
+use crate::domain::user::{User, UserWithToken};
 use crate::infrastructure::jwt::{JwtKeys};
 use crate::infrastructure::jwt as jwt;
 
 #[derive(Clone)]
-pub struct AuthService<R: UserRepository/* + 'static*/> {
+pub(crate) struct AuthService<R: UserRepository/* + 'static*/> {
     repo: Arc<R>,
     keys: JwtKeys,
 }
@@ -33,14 +33,20 @@ where
     }*/
 
     #[instrument(skip(self))]
-    pub async fn register(&self, name: String, email: String, password: String) -> Result<User, AuthError> {
+    pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken, AuthError> {
         let hash = jwt::hash_password(&password).map_err(|err| AuthError::Internal(err.to_string()))?;
         let user = User::new(name, email.to_lowercase(), hash);
-        self.repo.create(user).await.map_err(AuthError::from)
+        let token = self.keys
+            .generate_token(user.id, user.name.to_string())
+            .map_err(|err| AuthError::Internal(err.to_string()))?;
+
+        self.repo.create(user).await.map_err(AuthError::from)?;
+        
+        Ok(UserWithToken::new(user, token))
     }
 
     #[instrument(skip(self))]
-    pub async fn login(&self, email: &str, password: &str) -> Result<String, AuthError> {
+    pub(crate) async fn login(&self, email: &str, password: &str) -> Result<String, AuthError> {
         let user = self
             .repo
             .find_by_email(&email.to_lowercase())

@@ -5,23 +5,19 @@ use serde_json::json;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub(crate) enum AuthError {
-    #[error("validation error: {0}")]
-    Validation(String),
-    #[error("user not found")]
-    NotFound,
-    #[error("unauthorized")]
-    Unauthorized,
-    #[error("internal server error: {0}")]
-    Internal(String),
-}
-
-#[derive(Debug, Error)]
 pub(crate) enum DomainError {
     #[error("validation error: {0}")]
     Validation(String),
     #[error("internal server error: {0}")]
     Internal(String),
+    #[error("user not found: {0}")]
+    UserNotFound(String),
+    #[error("user already exists: {0}")]
+    UserAlreadyExists(String),
+    #[error("post not found: {0}")]
+    PostNotFound(String),
+    #[error("forbidden")]
+    Forbidden
 }
 
 #[derive(Debug, Error)]
@@ -32,6 +28,8 @@ pub(crate) enum BlogError {
     Internal(String),
     #[error("unauthorized")]
     Unauthorized,
+    #[error("not found: {0}")]
+    NotFound(String),
 }
 
 #[derive(Serialize)]
@@ -64,5 +62,18 @@ impl ResponseError for BlogError {
             details,
         };
         HttpResponse::build(self.status_code()).json(body)
+    }
+}
+
+impl From<DomainError> for BlogError {
+    fn from(value: DomainError) -> Self {
+        match value {
+            DomainError::Validation(msg) => BlogError::Validation(msg),
+            DomainError::UserNotFound(id) => BlogError::NotFound(format!("user {}", id)),
+            DomainError::PostNotFound(id) => BlogError::NotFound(format!("post {}", id)),
+            DomainError::Forbidden => BlogError::Validation("forbidden to edit post".to_owned()),
+            DomainError::UserAlreadyExists(id) => BlogError::Validation(format!("user {} already exists", id)),
+            DomainError::Internal(msg) => BlogError::Internal(msg),
+        }
     }
 }

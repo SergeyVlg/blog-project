@@ -3,11 +3,12 @@ use chrono::Utc;
 use tracing::info;
 use crate::application::auth_service::AuthService;
 use crate::data::user_repository::PostgresUserRepository;
-use crate::domain::error::BlogError;
-use crate::presentation::dto::{LoginRequest, RegisterRequest};
+use crate::domain::error::{BlogError};
+use crate::domain::user::UserWithToken;
+use crate::presentation::dto::{HealthResponse, LoginRequest, RegisterRequest};
 
 pub fn scope() -> Scope {
-    web::scope("")
+    web::scope("/api/auth")
         .route("/health", web::get().to(health))
         .service(register)
         .service(login)
@@ -20,17 +21,17 @@ async fn health() -> impl Responder {
     })
 }
 
-#[post("/auth/register")]
+#[post("/register")]
 async fn register(
     service: web::Data<AuthService<PostgresUserRepository>>,
     payload: web::Json<RegisterRequest>,
 ) -> Result<impl Responder, BlogError> {
+    let RegisterRequest {name, email, password} = payload.into_inner();
     let user_with_token = service
-        .register(payload.name, payload.email, payload.password)
+        .register(name, email, password)
         .await?;
 
-    let user = user_with_token.user;
-    let token = user_with_token.token;
+    let UserWithToken { user, token } = user_with_token;
 
     info!(user_id = %user.id, email = %user.email, "user registered");
 
@@ -40,12 +41,19 @@ async fn register(
     })))
 }
 
-#[post("/auth/login")]
+#[post("/login")]
 async fn login(
     service: web::Data<AuthService<PostgresUserRepository>>,
     payload: web::Json<LoginRequest>,
 ) -> Result<impl Responder, BlogError> {
-    let jwt = service.login(&payload.email, &payload.password).await?;
+    let user_with_token = service.login(&payload.email, &payload.password).await?;
+
     info!(email = %payload.email, "user logged in");
-    Ok(HttpResponse::Ok().json(TokenResponse { access_token: jwt }))
+
+    let UserWithToken { user, token } = user_with_token;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "user": user,
+        "token": token
+    })))
 }

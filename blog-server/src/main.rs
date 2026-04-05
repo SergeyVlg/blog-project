@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
                 actix_web::http::header::AUTHORIZATION,
             ])
             .supports_credentials()
-            .max_age(600);
+            .max_age(3600);
 
         App::new()
             .wrap(Logger::default())

@@ -1,6 +1,8 @@
 ﻿use chrono::{DateTime, Utc};
+use serde::Serialize;
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct Post {
     pub id: Uuid,
     pub author_id: Uuid,

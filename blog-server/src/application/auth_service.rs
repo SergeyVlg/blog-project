@@ -1,7 +1,7 @@
 ﻿use std::sync::Arc;
 use tracing::instrument;
 use crate::data::user_repository::UserRepository;
-use crate::domain::error::AuthError;
+use crate::domain::error::{BlogError};
 use crate::domain::user::{User, UserWithToken};
 use crate::infrastructure::jwt::{JwtKeys};
 use crate::infrastructure::jwt as jwt;
@@ -33,36 +33,38 @@ where
     }*/
 
     #[instrument(skip(self))]
-    pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken, AuthError> {
-        let hash = jwt::hash_password(&password).map_err(|err| AuthError::Internal(err.to_string()))?;
+    pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken, BlogError> {
+        let hash = jwt::hash_password(&password).map_err(|err| BlogError::Internal(err.to_string()))?;
         let user = User::new(name, email.to_lowercase(), hash);
         let token = self.keys
             .generate_token(user.id, user.name.to_string())
-            .map_err(|err| AuthError::Internal(err.to_string()))?;
+            .map_err(|err| BlogError::Internal(err.to_string()))?;
 
-        self.repo.create(user).await.map_err(AuthError::from)?;
+        let user = self.repo.create(user).await.map_err(BlogError::from)?;
         
         Ok(UserWithToken::new(user, token))
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn login(&self, email: &str, password: &str) -> Result<String, AuthError> {
+    pub(crate) async fn login(&self, email: &str, password: &str) -> Result<UserWithToken, BlogError> {
         let user = self
             .repo
             .find_by_email(&email.to_lowercase())
             .await
-            .map_err(AuthError::from)?
-            .ok_or_else(|| AuthError::NotFound)?;
+            .map_err(BlogError::from)?
+            .ok_or_else(|| BlogError::NotFound(format!("User with email {} not found", email)))?;
 
         let valid = jwt::verify_password(password, &user.password_hash)
-            .map_err(|_| AuthError::Unauthorized)?;
+            .map_err(|err| BlogError::Internal(err.to_string()))?;
 
         if !valid {
-            return Err(AuthError::Unauthorized);
+            return Err(BlogError::Unauthorized);
         }
 
-        self.keys
-            .generate_token(user.id, user.name)
-            .map_err(|err| AuthError::Internal(err.to_string()))
+        let token = self.keys
+            .generate_token(user.id.to_owned(), user.name.to_owned())
+            .map_err(|err| BlogError::Internal(err.to_string()))?;
+
+        Ok(UserWithToken::new(user, token))
     }
 }

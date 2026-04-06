@@ -1,28 +1,18 @@
-use actix_web::{get, post, web, HttpMessage, HttpRequest, HttpResponse, Scope};
+use actix_web::{delete, get, post, put, web, HttpResponse, Scope};
 use tracing::info;
+use uuid::Uuid;
 use crate::application::blog_service::BlogService;
 use crate::data::post_repository::PostgresPostRepository;
 use crate::domain::error::BlogError;
 use crate::presentation::auth::AuthenticatedUser;
-use crate::presentation::dto::{CreatePostRequest, GetPostsRequest};
+use crate::presentation::dto::{CreatePostRequest, GetPostsRequest, UpdatePostRequest};
 
 pub fn scope() -> Scope {
     web::scope("/api")
         .service(create_post)
-        .service(list_accounts)
-        .service(get_account)
-        .service(deposit)
-        .service(withdraw)
-        .service(transfer)
-        .service(exchange_rate)
-}
-
-fn ensure_owner(account: &AccountResponse, user: &AuthenticatedUser) -> Result<(), BlogError> {
-    if account.owner_id != user.id {
-        return Err(BlogError::Unauthorized)
-    }
-
-    Ok(())
+        .service(list_posts)
+        .service(update_post)
+        .service(delete_post)
 }
 
 #[post("/posts")]
@@ -46,8 +36,7 @@ async fn create_post(
 }
 
 #[get("/posts")]
-async fn list_accounts(
-    req: HttpRequest,
+async fn list_posts(
     user: AuthenticatedUser,
     blog: web::Data<BlogService<PostgresPostRepository>>,
     query: web::Query<GetPostsRequest>
@@ -56,10 +45,10 @@ async fn list_accounts(
     let posts = blog.list_posts(limit, offset).await?;
 
     info!(
-        request_id = %request_id(&req),
         user_id = %user.id,
-        count = response.len(),
-        "accounts listed"
+        limit = %limit,
+        offset = %offset,
+        "list posts"
     );
 
     Ok(HttpResponse::Ok().json(serde_json::json!({
@@ -70,117 +59,44 @@ async fn list_accounts(
     })))
 }
 
-#[get("/accounts/{id}")]
-async fn get_account(
-    req: HttpRequest,
+#[put("/posts/{id}")]
+async fn update_post(
     user: AuthenticatedUser,
-    bank: web::Data<BankService<PostgresAccountRepository>>,
-    path: web::Path<i32>,
-) -> Result<HttpResponse, BankError> {
-    let account = bank.get_account(path.into_inner()).await?;
-    let response = AccountResponse::from(account);
-    ensure_owner(&response, &user)?;
+    blog: web::Data<BlogService<PostgresPostRepository>>,
+    payload: web::Json<UpdatePostRequest>,
+    path: web::Path<Uuid>,
+) -> Result<HttpResponse, BlogError> {
+    let UpdatePostRequest { title, content } = payload.into_inner();
+    let post_id = path.into_inner();
+    let post = blog
+        .update_post(user.id, post_id, title, content)
+        .await?;
 
     info!(
-        request_id = %request_id(&req),
-        user_id = %user.id,
-        account_id = response.id,
-        "account fetched"
+        post_id = %post_id,
+        author_id = %user.id,
+        author = %user.name,
+        "post updated"
     );
 
-    Ok(HttpResponse::Ok().json(response))
+    Ok(HttpResponse::Created().json(post))
 }
 
-#[post("/accounts/{id}/deposit")]
-async fn deposit(
-    req: HttpRequest,
+#[delete("/posts/{id}")]
+async fn delete_post(
     user: AuthenticatedUser,
-    bank: web::Data<BankService<PostgresAccountRepository>>,
-    path: web::Path<i32>,
-    payload: web::Json<AmountRequest>,
-) -> Result<HttpResponse, BankError> {
-    let account_id = path.into_inner();
-    let account = bank.get_account(account_id).await?;
-    let response = AccountResponse::from(account.clone());
-    ensure_owner(&response, &user)?;
-
-    let account = bank.deposit(account_id, payload.amount).await?;
-    let response = AccountResponse::from(account);
+    blog: web::Data<BlogService<PostgresPostRepository>>,
+    path: web::Path<Uuid>,
+) -> Result<HttpResponse, BlogError> {
+    let post_id = path.into_inner();
+    blog.delete_post(user.id, post_id).await?;
 
     info!(
-        request_id = %request_id(&req),
-        user_id = %user.id,
-        account_id = response.id,
-        amount = payload.amount,
-        "deposit completed"
+        post_id = %post_id,
+        author_id = %user.id,
+        author = %user.name,
+        "post deleted"
     );
 
-    Ok(HttpResponse::Ok().json(response))
-}
-
-#[post("/accounts/{id}/withdraw")]
-async fn withdraw(
-    req: HttpRequest,
-    user: AuthenticatedUser,
-    bank: web::Data<BankService<PostgresAccountRepository>>,
-    path: web::Path<i32>,
-    payload: web::Json<AmountRequest>,
-) -> Result<HttpResponse, BankError> {
-    let account_id = path.into_inner();
-    let account = bank.get_account(account_id).await?;
-    let response = AccountResponse::from(account.clone());
-    ensure_owner(&response, &user)?;
-
-    let account = bank.withdraw(account_id, payload.amount).await?;
-    let response = AccountResponse::from(account);
-
-    info!(
-        request_id = %request_id(&req),
-        user_id = %user.id,
-        account_id = response.id,
-        amount = payload.amount,
-        "withdraw completed"
-    );
-
-    Ok(HttpResponse::Ok().json(response))
-}
-
-#[post("/transfers")]
-async fn transfer(
-    req: HttpRequest,
-    user: AuthenticatedUser,
-    bank: web::Data<BankService<PostgresAccountRepository>>,
-    payload: web::Json<TransferRequest>,
-) -> Result<HttpResponse, BankError> {
-    let account = bank.get_account(payload.from).await?;
-    if account.owner_id != user.id {
-        return Err(BankError::Unauthorized);
-    }
-
-    bank.transfer(payload.from, payload.to, payload.amount).await?;
-
-    info!(
-        request_id = %request_id(&req),
-        user_id = %user.id,
-        from = payload.from,
-        to = payload.to,
-        amount = payload.amount,
-        "transfer completed"
-    );
-
-    Ok(HttpResponse::Ok().json(serde_json::json!({ "status": "transferred" })))
-}
-
-#[get("/exchange/{from}/{to}")]
-async fn exchange_rate(
-    service: web::Data<ExchangeService>,
-    path: web::Path<(String, String)>,
-) -> Result<HttpResponse, BankError> {
-    let (from, to) = path.into_inner();
-    let rate = service
-        .get_rate(&from, &to)
-        .await
-        .map_err(|err| BankError::Internal(err.to_string()))?;
-
-    Ok(HttpResponse::Ok().json(ExchangeResponse { from, to, rate }))
+    Ok(HttpResponse::NoContent().finish())
 }

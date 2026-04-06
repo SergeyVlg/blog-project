@@ -28,6 +28,12 @@ pub struct CreatePostRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdatePostRequest {
+    pub title: String,
+    pub content: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct GetPostsRequest {
     #[serde(default = "GetPostsRequest::set_default_limit")]
     pub limit: u32,

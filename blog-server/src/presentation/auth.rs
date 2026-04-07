@@ -3,6 +3,9 @@ use actix_web::error::ErrorUnauthorized;
 use actix_web::dev::Payload;
 use uuid::Uuid;
 use futures_util::future::{ready, Ready};
+use crate::application::auth_service::AuthService;
+use crate::data::user_repository::PostgresUserRepository;
+use crate::infrastructure::jwt::JwtKeys;
 
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
@@ -20,4 +23,25 @@ impl FromRequest for AuthenticatedUser {
             None => ready(Err(ErrorUnauthorized("missing authenticated user"))),
         }
     }
+}
+
+pub async fn jwt_validator(
+    token: &str,
+    keys: &JwtKeys,
+    auth_service: &AuthService<PostgresUserRepository>,
+) -> Result<AuthenticatedUser, Error> {
+    let claims = keys
+        .verify_token(token)
+        .map_err(|_| ErrorUnauthorized("invalid token"))?;
+
+    let user_id = Uuid::parse_str(&claims.user_id).map_err(|_| ErrorUnauthorized("invalid token"))?;
+    let user = auth_service
+        .get_user(user_id)
+        .await
+        .map_err(|_| ErrorUnauthorized("user not found"))?;
+
+    Ok(AuthenticatedUser {
+        id: user.id,
+        name: user.name,
+    })
 }

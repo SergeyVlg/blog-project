@@ -15,6 +15,7 @@ use crate::data::post_repository::PostgresPostRepository;
 use crate::data::user_repository::PostgresUserRepository;
 use crate::infrastructure::jwt::JwtKeys;
 use crate::presentation::http_handlers;
+use crate::presentation::middleware::JwtAuthMiddleware;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -57,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(http_handlers::public::scope())
                     .service(
                         web::scope("")
-                            //.wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
+                            .wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
                             .service(http_handlers::protected::scope()),
                     ),
             )

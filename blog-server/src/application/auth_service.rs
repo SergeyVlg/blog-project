@@ -20,17 +20,17 @@ where
         Self { repo, keys }
     }
 
-    /*pub fn keys(&self) -> &JwtKeys {
+    pub(crate) fn keys(&self) -> &JwtKeys {
         &self.keys
     }
 
-    pub async fn get_user(&self, id: uuid::Uuid) -> Result<User, BankError> {
+    pub(crate) async fn get_user(&self, id: uuid::Uuid) -> Result<User, BlogError> {
         self.repo
             .find_by_id(id)
             .await
-            .map_err(BankError::from)?
-            .ok_or_else(|| BankError::NotFound(format!("user {}", id)))
-    }*/
+            .map_err(BlogError::from)?
+            .ok_or_else(|| BlogError::NotFound(format!("user {}", id)))
+    }
 
     #[instrument(skip(self))]
     pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken, BlogError> {

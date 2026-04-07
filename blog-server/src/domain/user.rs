@@ -24,8 +24,8 @@ impl User {
 }
 
 pub(crate) struct UserWithToken {
-    user: User,
-    token: String,
+    pub user: User,
+    pub token: String,
 }
 
 impl UserWithToken {

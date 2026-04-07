@@ -16,11 +16,11 @@ impl<R> AuthService<R>
 where
     R: UserRepository/* + 'static*/,
 {
-    /*pub fn new(repo: Arc<R>, keys: JwtKeys) -> Self {
+    pub fn new(repo: Arc<R>, keys: JwtKeys) -> Self {
         Self { repo, keys }
     }
 
-    pub fn keys(&self) -> &JwtKeys {
+    /*pub fn keys(&self) -> &JwtKeys {
         &self.keys
     }
 

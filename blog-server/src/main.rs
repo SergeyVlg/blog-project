@@ -4,44 +4,44 @@ mod domain;
 mod data;
 mod infrastructure;
 
-use std::io::Error;
+use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-
-use infrastructure::{logging, config::Config };//, config::Config, migrate};
-use sqlx::postgres::PgPoolOptions;
-//use infrastructure::logging::init_logging;
+use anyhow::Context;
+use infrastructure::{logging::init_logging, config::Config, database};
+use crate::application::auth_service::AuthService;
+use crate::application::blog_service::BlogService;
+use crate::data::post_repository::PostgresPostRepository;
+use crate::data::user_repository::PostgresUserRepository;
+use crate::infrastructure::jwt::JwtKeys;
+use crate::presentation::http_handlers;
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    dotenvy::dotenv().map_err(|e| Error::new(std::io::ErrorKind::InvalidInput, format!("Env file error {}", e)))?;
-    logging::init_logging();
+async fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv().context("Env file error")?;
+    init_logging();
 
     tracing::info!("Starting server...");
 
-    let cfg = Config::from_env().expect("invalid config"); //TODO убрать expect
+    let config = Config::from_env().context("Invalid config")?;
+    let pool = database::create_pool(&config.database_url).await.context("failed to connect to database")?;
 
-    /*let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&cfg.database_url)
-        .await
-        .expect("failed to connect to database");*/
+    database::run_migrations(&pool).await.context("migrations failed")?;
 
-    // миграции
-    //migrate::run(&pool).await.expect("migrations failed");
-
-
-    let addr = format!("{}:{}", cfg.host, cfg.port);
+    let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("→ listening on http://{}", addr);
+
+    let user_repo = Arc::new(PostgresUserRepository::new(pool.clone()));
+    let post_repo = Arc::new(PostgresPostRepository::new(pool.clone()));
+
+    let auth_service = AuthService::new(Arc::clone(&user_repo), JwtKeys::new(config.jwt_secret.clone()));
+    let blog_service = BlogService::new(Arc::clone(&post_repo));
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin(&cfg.cors_origin)
-            .allowed_methods(vec!["GET","POST","OPTIONS"])
-            .allowed_headers(vec![
-                actix_web::http::header::CONTENT_TYPE,
-                actix_web::http::header::AUTHORIZATION,
-            ])
+            .allowed_origin(&config.cors_origin)
+            .allowed_methods(vec!["GET","POST","PUT","DELETE","OPTIONS"])
+            .allow_any_header()
             .supports_credentials()
             .max_age(3600);
 
@@ -49,10 +49,23 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(cfg.clone()))
-            .configure(presentation::routes::configure)
+            .app_data(web::Data::new(config.clone()))
+            .app_data(web::Data::new(auth_service.clone()))
+            .app_data(web::Data::new(blog_service.clone()))
+            .service(
+                web::scope("/api")
+                    .service(http_handlers::public::scope())
+                    .service(
+                        web::scope("")
+                            //.wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
+                            .service(http_handlers::protected::scope()),
+                    ),
+            )
     })
         .bind(addr)?
         .run()
         .await
+        .context("server error")?;
+
+    Ok(())
 }

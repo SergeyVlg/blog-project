@@ -12,11 +12,11 @@ use crate::presentation::auth::AuthenticatedUser;
 use crate::presentation::dto::{HealthResponse, LoginRequest, RegisterRequest};
 
 pub fn scope() -> Scope {
-    web::scope("/api/auth")
-        .route("/health", web::get().to(health))
+    web::scope("/auth")
         .service(register)
         .service(login);
-    web::scope("/api")
+    web::scope("")
+        .route("/health", web::get().to(health))
         .service(get_post)
 }
 

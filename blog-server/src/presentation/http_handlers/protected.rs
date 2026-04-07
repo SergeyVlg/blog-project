@@ -8,7 +8,7 @@ use crate::presentation::auth::AuthenticatedUser;
 use crate::presentation::dto::{CreatePostRequest, GetPostsRequest, UpdatePostRequest};
 
 pub fn scope() -> Scope {
-    web::scope("/api")
+    web::scope("")
         .service(create_post)
         .service(list_posts)
         .service(update_post)

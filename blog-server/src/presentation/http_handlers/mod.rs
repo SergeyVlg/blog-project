@@ -1,2 +1,2 @@
-mod public;
-mod protected;
+pub(crate) mod public;
+pub(crate) mod protected;

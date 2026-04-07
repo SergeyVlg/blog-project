@@ -1,18 +1,17 @@
-﻿use std::sync::Arc;
-use uuid::Uuid;
-use crate::data::post_repository::PostRepository;
-use crate::domain::error::{BlogError};
+﻿use crate::data::post_repository::PostRepository;
+use crate::domain::error::BlogError;
 use crate::domain::post::Post;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub(crate) struct BlogService<R: PostRepository/* + 'static*/> {
-    repo: Arc<R>,
+    repo: R,
 }
 
 impl <R> BlogService<R>
 where R: PostRepository/* + 'static*/,
 {
-    pub(crate) fn new(repo: Arc<R>) -> Self {
+    pub(crate) fn new(repo: R) -> Self {
         Self { repo }
     }
 

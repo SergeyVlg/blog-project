@@ -32,11 +32,12 @@ async fn main() -> anyhow::Result<()> {
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("→ listening on http://{}", addr);
 
-    let user_repo = Arc::new(PostgresUserRepository::new(pool.clone()));
-    let post_repo = Arc::new(PostgresPostRepository::new(pool.clone()));
+    //что лучше - Arc на репозиторий или сервис?
+    let user_repo = PostgresUserRepository::new(pool.clone());
+    let post_repo = PostgresPostRepository::new(pool.clone());
 
-    let auth_service = AuthService::new(Arc::clone(&user_repo), JwtKeys::new(config.jwt_secret.clone()));
-    let blog_service = BlogService::new(Arc::clone(&post_repo));
+    let auth_service = Arc::new(AuthService::new(user_repo, JwtKeys::new(config.jwt_secret.clone())));
+    let blog_service = Arc::new(BlogService::new(post_repo));
 
     HttpServer::new(move || {
         let cors = Cors::default()

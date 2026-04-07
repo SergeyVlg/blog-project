@@ -8,7 +8,7 @@ use crate::infrastructure::jwt as jwt;
 
 #[derive(Clone)]
 pub(crate) struct AuthService<R: UserRepository/* + 'static*/> {
-    repo: Arc<R>,
+    repo: R,
     keys: JwtKeys,
 }
 
@@ -16,7 +16,7 @@ impl<R> AuthService<R>
 where
     R: UserRepository/* + 'static*/,
 {
-    pub fn new(repo: Arc<R>, keys: JwtKeys) -> Self {
+    pub fn new(repo: R, keys: JwtKeys) -> Self {
         Self { repo, keys }
     }
 

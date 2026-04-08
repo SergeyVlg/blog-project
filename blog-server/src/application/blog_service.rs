@@ -17,6 +17,7 @@ where R: PostRepository/* + 'static*/,
 
     pub(crate) async fn create_post(&self, author_id: Uuid, title: String, content: String) -> Result<Post, BlogError> {
         let post = Post::new(author_id, title, content);
+
         self.repo.create(post).await.map_err(BlogError::from)
     }
 

@@ -30,6 +30,8 @@ pub(crate) enum BlogError {
     Unauthorized,
     #[error("not found: {0}")]
     NotFound(String),
+    #[error("user already exists")]
+    UserAlreadyExists,
 }
 
 #[derive(Serialize)]
@@ -44,6 +46,7 @@ impl ResponseError for BlogError {
         match self {
             BlogError::Validation(_) => StatusCode::BAD_REQUEST,
             BlogError::NotFound(_) => StatusCode::NOT_FOUND,
+            BlogError::UserAlreadyExists => StatusCode::CONFLICT,
             BlogError::Unauthorized => StatusCode::UNAUTHORIZED,
             BlogError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -54,6 +57,7 @@ impl ResponseError for BlogError {
         let details = match self {
             BlogError::Validation(msg) => Some(json!({ "message": msg })),
             BlogError::NotFound(resource) => Some(json!({ "resource": resource })),
+            BlogError::UserAlreadyExists => None,
             BlogError::Unauthorized => None,
             BlogError::Internal(_) => None,
         };

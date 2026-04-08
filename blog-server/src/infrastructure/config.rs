@@ -1,4 +1,5 @@
-﻿use serde::Deserialize;
+﻿use anyhow::Context;
+use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -11,6 +12,8 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
+        dotenvy::dotenv().context("Env file error")?;
+
         let database_url = std::env::var("DATABASE_URL")?;
         let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".into());
         let port = std::env::var("PORT").unwrap_or_else(|_| "8080".into()).parse()?;

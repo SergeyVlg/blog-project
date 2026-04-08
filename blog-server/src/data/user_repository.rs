@@ -1,5 +1,6 @@
 ﻿use async_trait::async_trait;
 use sqlx::PgPool;
+use tracing::{error, info};
 use uuid::Uuid;
 use crate::domain::error::DomainError;
 use crate::domain::user::User;
@@ -25,7 +26,7 @@ impl PostgresUserRepository {
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn create(&self, user: User) -> Result<User, DomainError> {
-        /*sqlx::query(
+        sqlx::query(
             r#"
             INSERT INTO users (id, email, password_hash)
             VALUES ($1, $2, $3)
@@ -38,20 +39,17 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| {
                 error!("failed to create user: {}", e);
-                if e.as_database_error()
-                    .and_then(|db| db.constraint())
-                    .map(|c| c.contains("users_email"))
-                    == Some(true)
-                {
-                    DomainError::Validation("email already registered".into())
-                } else {
-                    DomainError::Internal(format!("database error: {}", e))
+
+                return match e.as_database_error().and_then(|db| db.constraint()) {
+                    Some(err) if err.contains("users_email") => DomainError::Validation("email already registered".into()),
+                    Some(err) if err.contains("users_name") => DomainError::Validation("name already registered".into()),
+                    Some(err) => DomainError::Internal(format!("database error: {}", err)),
+                    None => DomainError::Internal(format!("database error: {}", e))
                 }
             })?;
 
         info!(user_id = %user.id, email = %user.email, "user created");
-        Ok(user)*/
-        todo!()
+        Ok(user)
     }
 
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError> {

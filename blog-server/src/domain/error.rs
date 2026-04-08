@@ -76,7 +76,7 @@ impl From<DomainError> for BlogError {
             DomainError::UserNotFound(id) => BlogError::NotFound(format!("user {}", id)),
             DomainError::PostNotFound(id) => BlogError::NotFound(format!("post {}", id)),
             DomainError::Forbidden => BlogError::Validation("forbidden to edit post".to_owned()),
-            DomainError::UserAlreadyExists(id) => BlogError::Validation(format!("user {} already exists", id)),
+            DomainError::UserAlreadyExists(_id) => BlogError::UserAlreadyExists,
             DomainError::Internal(msg) => BlogError::Internal(msg),
         }
     }

@@ -19,7 +19,6 @@ use crate::presentation::middleware::JwtAuthMiddleware;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv().context("Env file error")?;
     init_logging();
 
     tracing::info!("Starting server...");

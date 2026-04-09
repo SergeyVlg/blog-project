@@ -23,6 +23,7 @@ password-hash = "0.6.0"
 jsonwebtoken = "10.3.0"
 thiserror = "2.0.18"
 futures-util = "0.3.32"
+tonic = "0.14.5"
 
 [build-dependencies]
 tonic-build = "0.14.5"

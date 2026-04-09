@@ -52,9 +52,9 @@ async fn login(
     service: web::Data<AuthService<PostgresUserRepository>>,
     payload: web::Json<LoginRequest>,
 ) -> Result<impl Responder, BlogError> {
-    let user_with_token = service.login(&payload.email, &payload.password).await?;
+    let user_with_token = service.login(&payload.name, &payload.password).await?;
 
-    info!(email = %payload.email, "user logged in");
+    info!(name = %payload.name, "user logged in");
 
     let UserWithToken { user, token } = user_with_token;
 

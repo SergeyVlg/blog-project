@@ -17,7 +17,7 @@ pub struct RegisterResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
-    pub email: String,
+    pub name: String,
     pub password: String,
 }
 

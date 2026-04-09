@@ -46,13 +46,17 @@ where
     }
 
     #[instrument(skip(self))]
-    pub(crate) async fn login(&self, email: &str, password: &str) -> Result<UserWithToken, BlogError> {
+    pub(crate) async fn login(&self, name: &str, password: &str) -> Result<UserWithToken, BlogError> {
+        if name.is_empty() || password.is_empty() {
+            return Err(BlogError::Validation("name or password cannot be empty".into()));
+        }
+
         let user = self
             .repo
-            .find_by_email(&email.to_lowercase())
+            .find_by_name(&name.to_lowercase())
             .await
             .map_err(BlogError::from)?
-            .ok_or_else(|| BlogError::NotFound(format!("User with email {} not found", email)))?;
+            .ok_or_else(|| BlogError::NotFound(format!("User with email {} not found", name)))?;
 
         let valid = jwt::verify_password(password, &user.password_hash)
             .map_err(|err| BlogError::Internal(err.to_string()))?;

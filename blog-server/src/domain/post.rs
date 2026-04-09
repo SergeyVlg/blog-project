@@ -9,6 +9,7 @@ pub(crate) struct Post {
     pub title: String,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl Post {
@@ -19,6 +20,7 @@ impl Post {
             title,
             content,
             created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 }

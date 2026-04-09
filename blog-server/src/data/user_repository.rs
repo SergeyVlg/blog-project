@@ -43,7 +43,7 @@ impl UserRepository for PostgresUserRepository {
 
                 return match e.as_database_error().and_then(|db| db.constraint()) {
                     Some(err) if err.contains("users_email") => DomainError::Validation("email already registered".into()),
-                    Some(err) if err.contains("users_name") => DomainError::Validation("name already registered".into()),
+                    Some(err) if err.contains("users_username") => DomainError::Validation("name already registered".into()),
                     Some(err) => DomainError::Internal(format!("database error: {}", err)),
                     None => DomainError::Internal(format!("database error: {}", e))
                 }

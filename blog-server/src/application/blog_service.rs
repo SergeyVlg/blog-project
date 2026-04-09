@@ -16,12 +16,20 @@ where R: PostRepository/* + 'static*/,
     }
 
     pub(crate) async fn create_post(&self, author_id: Uuid, title: String, content: String) -> Result<Post, BlogError> {
+        if title.is_empty() || content.is_empty() {
+            return Err(BlogError::Validation("title or content cannot be empty".into()));
+        }
+
         let post = Post::new(author_id, title, content);
 
         self.repo.create(post).await.map_err(BlogError::from)
     }
 
     pub(crate) async fn update_post(&self, author_id: Uuid, post_id: Uuid, title: String, content: String) -> Result<Post, BlogError> {
+        if title.is_empty() || content.is_empty() {
+            return Err(BlogError::Validation("title or content cannot be empty".into()));
+        }
+        
         self.repo.update(author_id, post_id, title, content).await.map_err(BlogError::from)
     }
 

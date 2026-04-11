@@ -3,6 +3,7 @@ use actix_web::{HttpResponse, ResponseError};
 use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
+use tonic::Status;
 
 #[derive(Debug, Error)]
 pub(crate) enum DomainError {
@@ -78,6 +79,18 @@ impl From<DomainError> for BlogError {
             DomainError::Forbidden => BlogError::Validation("forbidden to edit post".to_owned()),
             DomainError::UserAlreadyExists(_id) => BlogError::UserAlreadyExists,
             DomainError::Internal(msg) => BlogError::Internal(msg),
+        }
+    }
+}
+
+impl From<BlogError> for Status {
+    fn from(value: BlogError) -> Self {
+        match value {
+            BlogError::Validation(err) => Status::invalid_argument(err),
+            BlogError::Internal(err) => Status::internal(err),
+            BlogError::Unauthorized => Status::unauthenticated("unauthorized"),
+            BlogError::NotFound(err) => Status::not_found(err),
+            BlogError::UserAlreadyExists => Status::already_exists("user already exists"),
         }
     }
 }

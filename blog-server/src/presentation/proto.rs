@@ -1,1 +1,3 @@
-﻿tonic::include_proto!("blog");
+﻿pub mod blog {
+    tonic::include_proto!("blog");
+}

@@ -34,6 +34,10 @@ where
 
     #[instrument(skip(self))]
     pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken, BlogError> {
+        if name.is_empty() || email.is_empty() || password.is_empty() {
+            return Err(BlogError::Validation("Name, or email or password is empty".into()));
+        }
+
         let hash = jwt::hash_password(&password).map_err(|err| BlogError::Internal(err.to_string()))?;
         let user = User::new(name, email.to_lowercase(), hash);
         let token = self.keys

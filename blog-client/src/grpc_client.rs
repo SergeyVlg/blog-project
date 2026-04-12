@@ -18,7 +18,7 @@ impl GrpcClient {
 		Ok(Self { client })
 	}
 
-	pub(crate) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken> {
+	pub(super) async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken> {
 		let request = RegisterRequest { name, email, password };
 		let response = self.client.clone().register(request).await?.into_inner();
 		let user = response

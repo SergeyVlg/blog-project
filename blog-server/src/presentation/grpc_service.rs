@@ -39,16 +39,12 @@ impl BlogGrpcService {
 #[tonic::async_trait]
 impl BlogServiceContract for BlogGrpcService {
     async fn register(&self, request: Request<RegisterRequest>) -> Result<Response<RegisterResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
-
         let req = request.into_inner();
-        let user = self.auth_service.register(req.name, req.email, req.password).await?.user;
+        let user_with_token = self.auth_service.register(req.name, req.email, req.password).await?;
+        let user = user_with_token.user;
         let response = RegisterResponse {
-            user: Some(User {
-                name: user.name,
-                email: user.email,
-                created_at: user.created_at.timestamp()
-            })
+            user: Some(user.into()),
+            token: user_with_token.token,
         };
 
         Ok(Response::new(response))
@@ -61,11 +57,7 @@ impl BlogServiceContract for BlogGrpcService {
         let user = self.auth_service.login(&req.name, &req.password).await?.user;
 
         let response = LoginResponse {
-            user: Some(User {
-                name: user.name,
-                email: user.email,
-                created_at: user.created_at.timestamp()
-            })
+            user: Some(user.into())
         };
 
         Ok(Response::new(response))
@@ -149,3 +141,15 @@ impl From<domain::post::Post> for Post {
         }
     }
 }
+
+impl From<domain::user::User> for User {
+    fn from(value: domain::user::User) -> Self {
+        User {
+            id: value.id.to_string(),
+            name: value.name,
+            email: value.email,
+            created_at: value.created_at.timestamp(),
+        }
+    }
+}
+

@@ -9,6 +9,9 @@ serde = { version = "1.0.228", features = ["derive"] }
 uuid = { version = "1.23.0", features = ["v4", "serde"] }
 chrono = { version =  "0.4.44", features = ["serde"] }
 thiserror = "2.0.18"
+tonic = "0.14.5"
+tonic-prost = "0.14.5"
+prost = "0.14.3"
 
 [build-dependencies]
 protoc-bin-vendored = "3.2.0"

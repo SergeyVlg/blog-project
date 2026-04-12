@@ -7,7 +7,6 @@ pub(crate) struct User {
     pub id: Uuid,
     pub name: String,
     pub email: String,
-    pub password_hash: String,
     pub created_at: DateTime<Utc>,
 }
 

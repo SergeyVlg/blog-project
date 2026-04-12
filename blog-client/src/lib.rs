@@ -7,6 +7,7 @@ mod http_client;
 mod grpc_client;
 mod error;
 mod dto;
+mod proto;
 
 enum Transport {
     Http(String),

@@ -20,12 +20,14 @@ message RegisterRequest {
 
 message RegisterResponse {
   User user = 1;
+  string token = 2;
 }
 
 message User {
-  string name = 1;
-  string email = 2;
-  int64 created_at = 3;
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int64 created_at = 4;
 }
 
 message LoginRequest {

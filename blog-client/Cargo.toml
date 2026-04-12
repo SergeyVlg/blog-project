@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+reqwest = { version = "0.13.2", features = ["json", "query"] }
+serde = { version = "1.0.228", features = ["derive"] }
+uuid = { version = "1.23.0", features = ["v4", "serde"] }
+chrono = { version =  "0.4.44", features = ["serde"] }
+thiserror = "2.0.18"
+
+[build-dependencies]
+protoc-bin-vendored = "3.2.0"
+tonic-prost-build = "0.14.5"

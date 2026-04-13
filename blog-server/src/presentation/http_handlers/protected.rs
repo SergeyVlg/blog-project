@@ -1,16 +1,15 @@
-use actix_web::{delete, get, post, put, web, HttpResponse, Scope};
+use actix_web::{delete, post, put, web, HttpResponse, Scope};
 use tracing::info;
 use uuid::Uuid;
 use crate::application::blog_service::BlogService;
 use crate::data::post_repository::PostgresPostRepository;
 use crate::domain::error::BlogError;
 use crate::presentation::auth::AuthenticatedUser;
-use crate::presentation::dto::{CreatePostRequest, GetPostsRequest, UpdatePostRequest};
+use crate::presentation::dto::{CreatePostRequest, UpdatePostRequest};
 
 pub fn scope() -> Scope {
     web::scope("")
         .service(create_post)
-        .service(list_posts)
         .service(update_post)
         .service(delete_post)
 }
@@ -33,30 +32,6 @@ async fn create_post(
     );
 
     Ok(HttpResponse::Created().json(post))
-}
-
-#[get("/posts")]
-async fn list_posts(
-    user: AuthenticatedUser,
-    blog: web::Data<BlogService<PostgresPostRepository>>,
-    query: web::Query<GetPostsRequest>
-) -> Result<HttpResponse, BlogError> {
-    let GetPostsRequest { limit, offset} = query.into_inner();
-    let posts = blog.list_posts(limit, offset).await?;
-
-    info!(
-        user_id = %user.id,
-        limit = %limit,
-        offset = %offset,
-        "list posts"
-    );
-
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "posts": posts,
-        "total": posts.len(),
-        "limit": limit,
-        "offset": offset,
-    })))
 }
 
 #[put("/posts/{id}")]

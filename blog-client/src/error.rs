@@ -16,6 +16,9 @@ pub(crate) enum BlogClientError {
 
     #[error("invalid gRPC response: {0}")]
     InvalidResponse(String),
+
+    #[error("authentication token is missing")]
+    MissingToken,
 }
 
 pub(crate) type Result<T> = std::result::Result<T, BlogClientError>;

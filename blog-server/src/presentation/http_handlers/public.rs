@@ -9,7 +9,7 @@ use crate::data::user_repository::PostgresUserRepository;
 use crate::domain::error::{BlogError};
 use crate::domain::user::UserWithToken;
 use crate::presentation::auth::AuthenticatedUser;
-use crate::presentation::dto::{HealthResponse, LoginRequest, RegisterRequest};
+use crate::presentation::dto::{GetPostsRequest, HealthResponse, LoginRequest, RegisterRequest};
 
 pub fn scope() -> Scope {
     web::scope("/auth")
@@ -18,6 +18,7 @@ pub fn scope() -> Scope {
     web::scope("")
         .route("/health", web::get().to(health))
         .service(get_post)
+        .service(list_posts)
 }
 
 async fn health() -> impl Responder {
@@ -78,4 +79,26 @@ async fn get_post(
     );
 
     Ok(HttpResponse::Ok().json(post))
+}
+
+#[get("/posts")]
+async fn list_posts(
+    blog: web::Data<BlogService<PostgresPostRepository>>,
+    query: web::Query<GetPostsRequest>
+) -> Result<HttpResponse, BlogError> {
+    let GetPostsRequest { limit, offset} = query.into_inner();
+    let posts = blog.list_posts(limit, offset).await?;
+
+    info!(
+        limit = %limit,
+        offset = %offset,
+        "list posts"
+    );
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "posts": posts,
+        "total": posts.len(),
+        "limit": limit,
+        "offset": offset,
+    })))
 }

@@ -51,24 +51,22 @@ impl BlogServiceContract for BlogGrpcService {
     }
 
     async fn login(&self, request: Request<LoginRequest>) -> Result<Response<LoginResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
-
         let req = request.into_inner();
-        let user = self.auth_service.login(&req.name, &req.password).await?.user;
+        let user_with_token = self.auth_service.login(&req.name, &req.password).await?;
+        let user = user_with_token.user;
 
         let response = LoginResponse {
-            user: Some(user.into())
+            user: Some(user.into()),
+            token: user_with_token.token,
         };
 
         Ok(Response::new(response))
     }
 
     async fn create_post(&self, request: Request<CreatePostRequest>) -> Result<Response<CreatePostResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
-
+        let authenticated_user = self.ensure_authentication(request.metadata()).await?;
         let req = request.into_inner();
-        let author_id = Uuid::parse_str(&req.author_id).map_err(|e| Status::invalid_argument(e.to_string()))?;
-        let post = self.blog_service.create_post(author_id, req.title, req.content).await?;
+        let post = self.blog_service.create_post(authenticated_user.id, req.title, req.content).await?;
 
         let response = CreatePostResponse {
             post: Some(post.into())
@@ -78,8 +76,6 @@ impl BlogServiceContract for BlogGrpcService {
     }
 
     async fn get_post(&self, request: Request<GetPostRequest>) -> Result<Response<GetPostResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
-
         let req = request.into_inner();
         let post_id = Uuid::parse_str(&req.id).map_err(|e| Status::invalid_argument(e.to_string()))?;
         let post = self.blog_service.get_post(post_id).await?;
@@ -92,12 +88,11 @@ impl BlogServiceContract for BlogGrpcService {
     }
 
     async fn update_post(&self, request: Request<UpdatePostRequest>) -> Result<Response<UpdatePostResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
+        let authenticated_user = self.ensure_authentication(request.metadata()).await?;
 
         let req = request.into_inner();
-        let author_id = Uuid::parse_str(&req.author_id).map_err(|e| Status::invalid_argument(e.to_string()))?;
         let post_id = Uuid::parse_str(&req.id).map_err(|e| Status::invalid_argument(e.to_string()))?;
-        let post = self.blog_service.update_post(author_id, post_id, req.title, req.content).await?;
+        let post = self.blog_service.update_post(authenticated_user.id, post_id, req.title, req.content).await?;
 
         let response = UpdatePostResponse {
             post: Some(post.into())
@@ -107,13 +102,12 @@ impl BlogServiceContract for BlogGrpcService {
     }
 
     async fn delete_post(&self, request: Request<DeletePostRequest>) -> Result<Response<DeletePostResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
+        let authenticated_user = self.ensure_authentication(request.metadata()).await?;
 
         let req = request.into_inner();
-        let author_id = Uuid::parse_str(&req.author_id).map_err(|e| Status::invalid_argument(e.to_string()))?;
         let post_id = Uuid::parse_str(&req.id).map_err(|e| Status::invalid_argument(e.to_string()))?;
 
-        self.blog_service.delete_post(author_id, post_id).await?;
+        self.blog_service.delete_post(authenticated_user.id, post_id).await?;
 
         Ok(Response::new(DeletePostResponse {}))
     }
@@ -123,9 +117,15 @@ impl BlogServiceContract for BlogGrpcService {
 
         let req = request.into_inner();
         let data_posts = self.blog_service.list_posts(req.limit, req.offset).await?;
+        let total = data_posts.len() as u32;
         let posts = data_posts.into_iter().map(|p| p.into()).collect();
 
-        Ok(Response::new(ListPostsResponse { posts }))
+        Ok(Response::new(ListPostsResponse {
+            posts,
+            total,
+            limit: req.limit,
+            offset: req.offset,
+        }))
     }
 }
 

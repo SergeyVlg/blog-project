@@ -37,12 +37,12 @@ message LoginRequest {
 
 message LoginResponse {
   User user = 1;
+  string token = 2;
 }
 
 message CreatePostRequest {
-  string author_id = 1;
-  string title = 2;
-  string content = 3;
+  string title = 1;
+  string content = 2;
 }
 
 message CreatePostResponse {
@@ -68,9 +68,8 @@ message GetPostResponse {
 
 message UpdatePostRequest {
   string id = 1;
-  string author_id = 2;
-  string title = 3;
-  string content = 4;
+  string title = 2;
+  string content = 3;
 }
 
 message UpdatePostResponse {
@@ -79,7 +78,6 @@ message UpdatePostResponse {
 
 message DeletePostRequest {
   string id = 1;
-  string author_id = 2;
 }
 
 message DeletePostResponse {}
@@ -91,4 +89,7 @@ message ListPostsRequest {
 
 message ListPostsResponse {
   repeated Post posts = 1;
+  uint32 total = 2;
+  uint32 limit = 3;
+  uint32 offset = 4;
 }

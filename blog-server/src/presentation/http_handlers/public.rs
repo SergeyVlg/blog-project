@@ -1,4 +1,5 @@
-use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder, Scope};
+use std::sync::Arc;
+use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use chrono::Utc;
 use tracing::info;
 use uuid::Uuid;
@@ -8,17 +9,15 @@ use crate::data::post_repository::PostgresPostRepository;
 use crate::data::user_repository::PostgresUserRepository;
 use crate::domain::error::{BlogError};
 use crate::domain::user::UserWithToken;
-use crate::presentation::auth::AuthenticatedUser;
 use crate::presentation::dto::{GetPostsRequest, HealthResponse, LoginRequest, RegisterRequest};
 
 pub fn scope() -> Scope {
-    web::scope("/auth")
-        .service(register)
-        .service(login);
     web::scope("")
         .route("/health", web::get().to(health))
         .service(get_post)
         .service(list_posts)
+        .service(register)
+        .service(login)
 }
 
 async fn health() -> impl Responder {
@@ -30,7 +29,7 @@ async fn health() -> impl Responder {
 
 #[post("/register")]
 async fn register(
-    service: web::Data<AuthService<PostgresUserRepository>>,
+    service: web::Data<Arc<AuthService<PostgresUserRepository>>>,
     payload: web::Json<RegisterRequest>,
 ) -> Result<impl Responder, BlogError> {
     let RegisterRequest {name, email, password} = payload.into_inner();
@@ -50,7 +49,7 @@ async fn register(
 
 #[post("/login")]
 async fn login(
-    service: web::Data<AuthService<PostgresUserRepository>>,
+    service: web::Data<Arc<AuthService<PostgresUserRepository>>>,
     payload: web::Json<LoginRequest>,
 ) -> Result<impl Responder, BlogError> {
     let user_with_token = service.login(&payload.name, &payload.password).await?;
@@ -67,7 +66,7 @@ async fn login(
 
 #[get("/posts/{id}")]
 async fn get_post(
-    blog: web::Data<BlogService<PostgresPostRepository>>,
+    blog: web::Data<Arc<BlogService<PostgresPostRepository>>>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, BlogError> {
     let post_id = path.into_inner();
@@ -83,7 +82,7 @@ async fn get_post(
 
 #[get("/posts")]
 async fn list_posts(
-    blog: web::Data<BlogService<PostgresPostRepository>>,
+    blog: web::Data<Arc<BlogService<PostgresPostRepository>>>,
     query: web::Query<GetPostsRequest>
 ) -> Result<HttpResponse, BlogError> {
     let GetPostsRequest { limit, offset} = query.into_inner();

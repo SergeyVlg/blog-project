@@ -67,7 +67,8 @@ async fn http_server(config: Config,
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin(&config.cors_origin)
+            //.allowed_origin(&config.cors_origin)
+            .allow_any_origin()
             .allowed_methods(vec!["GET","POST","PUT","DELETE","OPTIONS"])
             .allow_any_header()
             .supports_credentials()
@@ -81,13 +82,13 @@ async fn http_server(config: Config,
             .app_data(web::Data::new(auth_service.clone()))
             .app_data(web::Data::new(blog_service.clone()))
             .service(
-                web::scope("/api")
+                web::scope("/api/public")
                     .service(http_handlers::public::scope())
-                    .service(
-                        web::scope("")
-                            .wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
-                            .service(http_handlers::protected::scope()),
-                    ),
+            )
+            .service(
+                web::scope("/api/protected")
+                    .wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
+                    .service(http_handlers::protected::scope()),
             )
     })
         .bind(addr)?

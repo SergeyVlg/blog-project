@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use actix_web::{delete, post, put, web, HttpResponse, Scope};
 use tracing::info;
 use uuid::Uuid;
@@ -17,7 +18,7 @@ pub fn scope() -> Scope {
 #[post("/posts")]
 async fn create_post(
     user: AuthenticatedUser,
-    blog: web::Data<BlogService<PostgresPostRepository>>,
+    blog: web::Data<Arc<BlogService<PostgresPostRepository>>>,
     payload: web::Json<CreatePostRequest>,
 ) -> Result<HttpResponse, BlogError> {
     let CreatePostRequest { title, content } = payload.into_inner();
@@ -37,7 +38,7 @@ async fn create_post(
 #[put("/posts/{id}")]
 async fn update_post(
     user: AuthenticatedUser,
-    blog: web::Data<BlogService<PostgresPostRepository>>,
+    blog: web::Data<Arc<BlogService<PostgresPostRepository>>>,
     payload: web::Json<UpdatePostRequest>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, BlogError> {
@@ -60,7 +61,7 @@ async fn update_post(
 #[delete("/posts/{id}")]
 async fn delete_post(
     user: AuthenticatedUser,
-    blog: web::Data<BlogService<PostgresPostRepository>>,
+    blog: web::Data<Arc<BlogService<PostgresPostRepository>>>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, BlogError> {
     let post_id = path.into_inner();

@@ -20,7 +20,7 @@ uuid = { version = "1.23.0", features = ["v4", "serde"] }
 async-trait = "0.1.89"
 argon2 = "0.6.0-rc.8"
 password-hash = "0.6.0"
-jsonwebtoken = "10.3.0"
+jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 thiserror = "2.0.18"
 futures-util = "0.3.32"
 tonic = "0.14.5"

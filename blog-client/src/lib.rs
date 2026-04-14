@@ -1,10 +1,10 @@
-use tonic::async_trait;
-use uuid::Uuid;
-use crate::dto::{GetPostsResponse, Post, User, UserWithToken};
+use crate::dto::{GetPostsResponse, Post, UserWithToken};
 use crate::error::{BlogClientError, Result};
 use crate::grpc_client::GrpcClient;
 use crate::http_client::HttpClient;
 use crate::transport::BlogTransport;
+use tonic::async_trait;
+use uuid::Uuid;
 
 mod http_client;
 mod grpc_client;
@@ -16,10 +16,9 @@ mod transport;
 #[async_trait]
 pub trait BlogClientApi: Send + Sync {
     fn set_token(&mut self, token: String);
-    fn clear_token(&mut self);
 
-    async fn register(&mut self, username: String, email: String, password: String) -> Result<User>;
-    async fn login(&mut self, username: String, password: String) -> Result<User>;
+    async fn register(&mut self, username: String, email: String, password: String) -> Result<UserWithToken>;
+    async fn login(&mut self, username: String, password: String) -> Result<UserWithToken>;
     async fn create_post(&self, title: String, content: String) -> Result<Post>;
 
     async fn get_post(&self, post_id: Uuid) -> Result<Post>;
@@ -50,24 +49,16 @@ impl<T: BlogTransport> BlogClientApi for BlogClient<T> {
         self.token = Some(token);
     }
 
-    fn clear_token(&mut self) {
-        self.token = None;
-    }
-
-    async fn register(&mut self, username: String, email: String, password: String) -> Result<User> {
+    async fn register(&mut self, username: String, email: String, password: String) -> Result<UserWithToken> {
         let user_with_token = self.transport.register(username, email, password).await?;
-        let UserWithToken { user, token } = user_with_token;
-        self.token = Some(token);
 
-        Ok(user)
+        Ok(user_with_token)
     }
 
-    async fn login(&mut self, username: String, password: String) -> Result<User> {
+    async fn login(&mut self, username: String, password: String) -> Result<UserWithToken> {
         let user_with_token = self.transport.login(username, password).await?;
-        let UserWithToken { user, token } = user_with_token;
-        self.token = Some(token);
 
-        Ok(user)
+        Ok(user_with_token)
     }
 
     async fn create_post(&self, title: String, content: String) -> Result<Post> {

@@ -24,7 +24,7 @@ impl HttpClient {
 #[async_trait]
 impl BlogTransport for HttpClient {
     async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken> {
-        let url = format!("{}/api/register", self.url);
+        let url = format!("{}/api/public/register", self.url);
         let req = RegisterRequest { name, email, password };
         let user = self.client
             .post(url)
@@ -39,7 +39,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn login(&self, name: String, password: String) -> Result<UserWithToken> {
-        let url = format!("{}/api/login", self.url);
+        let url = format!("{}/api/public/login", self.url);
         let req = LoginRequest { name, password };
         let user = self.client
             .get(url)
@@ -54,7 +54,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn create_post(&self, token: String, title: String, content: String) -> Result<Post> {
-        let url = format!("{}/posts", self.url);
+        let url = format!("{}/api/protected/posts", self.url);
         let req = CreatePostRequest { title, content };
         let post = self.client
             .post(url)
@@ -70,7 +70,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn get_post(&self, post_id: Uuid) -> Result<Post> {
-        let url = format!("{}/posts/{}", self.url, post_id);
+        let url = format!("{}/api/public/posts/{}", self.url, post_id);
         let post = self.client
             .get(url)
             .send()
@@ -83,7 +83,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn update_post(&self, token: String, post_id: Uuid, title: String, content: String) -> Result<Post> {
-        let url = format!("{}/posts/{}", self.url, post_id);
+        let url = format!("{}/api/protected/posts/{}", self.url, post_id);
         let req = UpdatePostRequest { title, content };
         let post = self.client
             .put(url)
@@ -99,7 +99,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn delete_post(&self, token: String, post_id: Uuid) -> Result<()> {
-        let url = format!("{}/posts/{}", self.url, post_id);
+        let url = format!("{}/api/protected/posts/{}", self.url, post_id);
         self.client
             .delete(url)
             .bearer_auth(token)
@@ -111,7 +111,7 @@ impl BlogTransport for HttpClient {
     }
 
     async fn list_posts(&self, limit: u32, offset: u32) -> Result<GetPostsResponse> {
-        let url = format!("{}/posts/", self.url);
+        let url = format!("{}/api/public/posts", self.url);
         let req = GetPostsRequest { limit, offset };
         let response = self.client
             .get(url)

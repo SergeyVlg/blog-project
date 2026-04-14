@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct User {
+pub struct User {
     pub id: Uuid,
     pub name: String,
     pub email: String,
@@ -11,7 +11,7 @@ pub(crate) struct User {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub(crate) struct UserWithToken {
+pub struct UserWithToken {
     pub user: User,
     pub token: String,
 }
@@ -30,7 +30,7 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub(crate) struct Post {
+pub struct Post {
     pub id: Uuid,
     pub author_id: Uuid,
     pub title: String,

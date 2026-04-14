@@ -1,11 +1,12 @@
 use std::time::Duration;
+use tonic::async_trait;
 use uuid::Uuid;
 use crate::dto::{CreatePostRequest, GetPostsRequest, GetPostsResponse, LoginRequest, Post, RegisterRequest, UpdatePostRequest, UserWithToken};
 use crate::error::{Result};
 use crate::transport::BlogTransport;
 
 #[derive(Debug, Clone)]
-pub(super) struct HttpClient {
+pub struct HttpClient {
     client: reqwest::Client,
     url: String,
 }
@@ -20,6 +21,7 @@ impl HttpClient {
     }
 }
 
+#[async_trait]
 impl BlogTransport for HttpClient {
     async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken> {
         let url = format!("{}/api/register", self.url);

@@ -16,11 +16,11 @@ use crate::proto::blog::{
 	User as ProtoUser,
 };
 use tonic::metadata::MetadataValue;
-use tonic::Request;
+use tonic::{async_trait, Request};
 use tonic::transport::Channel;
 
 #[derive(Debug, Clone)]
-pub(super) struct GrpcClient {
+pub struct GrpcClient {
 	client: BlogServiceClient<Channel>,
 }
 
@@ -101,6 +101,7 @@ impl GrpcClient {
 	}
 }
 
+#[async_trait]
 impl BlogTransport for GrpcClient {
 	async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken> {
 		let request = RegisterRequest { name, email, password };

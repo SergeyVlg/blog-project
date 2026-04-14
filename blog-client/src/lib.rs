@@ -1,3 +1,4 @@
+use tonic::async_trait;
 use uuid::Uuid;
 use crate::dto::{GetPostsResponse, Post, User, UserWithToken};
 use crate::error::{BlogClientError, Result};
@@ -12,34 +13,48 @@ mod dto;
 mod proto;
 mod transport;
 
-pub(crate) struct BlogClient<T>
-where T: BlogTransport,
+#[async_trait]
+pub trait BlogClientApi: Send + Sync {
+    fn set_token(&mut self, token: String);
+    fn clear_token(&mut self);
+
+    async fn register(&mut self, username: String, email: String, password: String) -> Result<User>;
+    async fn login(&mut self, username: String, password: String) -> Result<User>;
+    async fn create_post(&self, title: String, content: String) -> Result<Post>;
+
+    async fn get_post(&self, post_id: Uuid) -> Result<Post>;
+    async fn update_post(&self, post_id: Uuid, title: String, content: String) -> Result<Post>;
+    async fn delete_post(&self, post_id: Uuid) -> Result<()>;
+    async fn list_posts(&self, limit: u32, offset: u32) -> Result<GetPostsResponse>;
+}
+
+pub struct BlogClient<T: BlogTransport>
 {
     transport: T,
     token: Option<String>,
 }
 
-impl<T> BlogClient<T>
-where
-    T: BlogTransport,
+impl<T: BlogTransport> BlogClient<T>
 {
     fn with_transport(transport: T) -> Self {
         Self { transport, token: None }
     }
 
-    pub(crate) fn set_token(&mut self, token: String) {
+    fn get_token(&self) -> Result<&str> {
+        self.token.as_deref().ok_or(BlogClientError::MissingToken)
+    }
+}
+#[async_trait]
+impl<T: BlogTransport> BlogClientApi for BlogClient<T> {
+    fn set_token(&mut self, token: String) {
         self.token = Some(token);
     }
 
-    pub(crate) fn clear_token(&mut self) {
+    fn clear_token(&mut self) {
         self.token = None;
     }
 
-    fn require_token(&self) -> Result<&str> {
-        self.token.as_deref().ok_or(BlogClientError::MissingToken)
-    }
-
-    pub(crate) async fn register(&mut self, username: String, email: String, password: String) -> Result<User> {
+    async fn register(&mut self, username: String, email: String, password: String) -> Result<User> {
         let user_with_token = self.transport.register(username, email, password).await?;
         let UserWithToken { user, token } = user_with_token;
         self.token = Some(token);
@@ -47,7 +62,7 @@ where
         Ok(user)
     }
 
-    pub(crate) async fn login(&mut self, username: String, password: String) -> Result<User> {
+    async fn login(&mut self, username: String, password: String) -> Result<User> {
         let user_with_token = self.transport.login(username, password).await?;
         let UserWithToken { user, token } = user_with_token;
         self.token = Some(token);
@@ -55,35 +70,36 @@ where
         Ok(user)
     }
 
-    pub(crate) async fn create_post(&self, title: String, content: String) -> Result<Post> {
-        let token = self.require_token()?.to_owned();
+    async fn create_post(&self, title: String, content: String) -> Result<Post> {
+        let token = self.get_token()?.to_owned();
 
         self.transport.create_post(token, title, content).await
     }
 
-    pub(crate) async fn get_post(&self, post_id: Uuid) -> Result<Post> {
+    async fn get_post(&self, post_id: Uuid) -> Result<Post> {
         self.transport.get_post(post_id).await
     }
 
-    pub(crate) async fn update_post(&self, post_id: Uuid, title: String, content: String) -> Result<Post> {
-        let token = self.require_token()?.to_owned();
+    async fn update_post(&self, post_id: Uuid, title: String, content: String) -> Result<Post> {
+        let token = self.get_token()?.to_owned();
 
         self.transport.update_post(token, post_id, title, content).await
     }
 
-    pub(crate) async fn delete_post(&self, post_id: Uuid) -> Result<()> {
-        let token = self.require_token()?.to_owned();
+    async fn delete_post(&self, post_id: Uuid) -> Result<()> {
+        let token = self.get_token()?.to_owned();
+
 
         self.transport.delete_post(token, post_id).await
     }
 
-    pub(crate) async fn list_posts(&self, limit: u32, offset: u32) -> Result<GetPostsResponse> {
+    async fn list_posts(&self, limit: u32, offset: u32) -> Result<GetPostsResponse> {
         self.transport.list_posts(limit, offset).await
     }
 }
 
 impl BlogClient<HttpClient> {
-    pub(crate) fn new(url: String) -> Result<Self> {
+    pub fn new_http(url: String) -> Result<Self> {
         let transport = HttpClient::new(url)?;
 
         Ok(Self::with_transport(transport))
@@ -91,7 +107,7 @@ impl BlogClient<HttpClient> {
 }
 
 impl BlogClient<GrpcClient> {
-    pub(crate) async fn new(url: String) -> Result<Self> {
+    pub async fn new_grpc(url: String) -> Result<Self> {
         let transport = GrpcClient::new(url).await?;
 
         Ok(Self::with_transport(transport))

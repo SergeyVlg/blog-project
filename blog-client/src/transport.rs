@@ -1,8 +1,10 @@
-﻿use uuid::Uuid;
+﻿use tonic::async_trait;
+use uuid::Uuid;
 use crate::dto::{GetPostsResponse, Post, UserWithToken};
 use crate::error::Result;
 
-pub(crate) trait BlogTransport: Send + Sync {
+#[async_trait]
+pub trait BlogTransport: Send + Sync {
     async fn register(&self, name: String, email: String, password: String) -> Result<UserWithToken>;
     async fn login(&self, name: String, password: String) -> Result<UserWithToken>;
     

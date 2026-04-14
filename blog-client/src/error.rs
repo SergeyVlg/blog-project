@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub(crate) enum BlogClientError {
+pub enum BlogClientError {
     #[error("HTTP request failed: {0}")]
     Http(#[from] reqwest::Error),
 
@@ -21,4 +21,4 @@ pub(crate) enum BlogClientError {
     MissingToken,
 }
 
-pub(crate) type Result<T> = std::result::Result<T, BlogClientError>;
+pub type Result<T> = std::result::Result<T, BlogClientError>;

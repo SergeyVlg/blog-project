@@ -3,5 +3,13 @@ name = "blog-wasm"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+blog-client-integration = ["dep:blog-client"]
+
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+dioxus = { version = "0.7.5", features = ["web"] }
+blog-client = { workspace = true, optional = true }

@@ -29,7 +29,7 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Post {
     pub id: Uuid,
     pub author_id: Uuid,

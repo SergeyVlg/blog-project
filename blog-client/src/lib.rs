@@ -1,18 +1,35 @@
-use crate::dto::{GetPostsResponse, Post, UserWithToken};
-use crate::error::{BlogClientError, Result};
+pub mod dto;
+
+pub use crate::dto::{GetPostsResponse, Post};
+
+#[cfg(feature = "native-clients")]
+use crate::dto::UserWithToken;
+#[cfg(feature = "native-clients")]
 use crate::grpc_client::GrpcClient;
+#[cfg(feature = "native-clients")]
 use crate::http_client::HttpClient;
+#[cfg(feature = "native-clients")]
 use crate::transport::BlogTransport;
+#[cfg(feature = "native-clients")]
 use tonic::async_trait;
+#[cfg(feature = "native-clients")]
 use uuid::Uuid;
 
+#[cfg(feature = "native-clients")]
 mod http_client;
+#[cfg(feature = "native-clients")]
 mod grpc_client;
+#[cfg(feature = "native-clients")]
 mod error;
-mod dto;
+#[cfg(feature = "native-clients")]
 mod proto;
+#[cfg(feature = "native-clients")]
 mod transport;
 
+#[cfg(feature = "native-clients")]
+pub use crate::error::{BlogClientError, Result};
+
+#[cfg(feature = "native-clients")]
 #[async_trait]
 pub trait BlogClientApi: Send + Sync {
     fn set_token(&mut self, token: String);
@@ -27,12 +44,14 @@ pub trait BlogClientApi: Send + Sync {
     async fn list_posts(&self, limit: u32, offset: u32) -> Result<GetPostsResponse>;
 }
 
+#[cfg(feature = "native-clients")]
 pub struct BlogClient<T: BlogTransport>
 {
     transport: T,
     token: Option<String>,
 }
 
+#[cfg(feature = "native-clients")]
 impl<T: BlogTransport> BlogClient<T>
 {
     fn with_transport(transport: T) -> Self {
@@ -43,6 +62,7 @@ impl<T: BlogTransport> BlogClient<T>
         self.token.as_deref().ok_or(BlogClientError::MissingToken)
     }
 }
+#[cfg(feature = "native-clients")]
 #[async_trait]
 impl<T: BlogTransport> BlogClientApi for BlogClient<T> {
     fn set_token(&mut self, token: String) {
@@ -89,6 +109,7 @@ impl<T: BlogTransport> BlogClientApi for BlogClient<T> {
     }
 }
 
+#[cfg(feature = "native-clients")]
 impl BlogClient<HttpClient> {
     pub fn new_http(url: String) -> Result<Self> {
         let transport = HttpClient::new(url)?;
@@ -97,6 +118,7 @@ impl BlogClient<HttpClient> {
     }
 }
 
+#[cfg(feature = "native-clients")]
 impl BlogClient<GrpcClient> {
     pub async fn new_grpc(url: String) -> Result<Self> {
         let transport = GrpcClient::new(url).await?;

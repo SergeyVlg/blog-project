@@ -16,12 +16,178 @@ body {
 }
 
 .posts-page__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 32px;
+}
+
+.posts-page__header-title {
+    flex: 1;
 }
 
 .posts-page__header h1 {
     margin: 0 0 12px;
     font-size: 2.5rem;
+}
+
+.posts-page__auth-links {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.posts-page__auth-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.posts-page__auth-link:hover {
+    color: #1d4ed8;
+}
+
+.posts-page__auth-link_disabled {
+    color: #98a2b3;
+    cursor: not-allowed;
+}
+
+.posts-page__notice {
+    margin: 0 0 24px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.6;
+}
+
+.posts-page__notice_success {
+    color: #067647;
+    background: #ecfdf3;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.52);
+}
+
+.modal-card {
+    width: min(100%, 520px);
+    padding: 24px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+}
+
+.modal-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.modal-card__title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-card__close {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #667085;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal-card__close:hover {
+    color: #1f2937;
+}
+
+.registration-form {
+    display: grid;
+    gap: 20px;
+}
+
+.registration-form__fields {
+    display: grid;
+    gap: 16px;
+}
+
+.registration-form__field {
+    display: grid;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.registration-form__field input {
+    padding: 12px 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 12px;
+    font: inherit;
+    color: #1f2937;
+    background: #fff;
+}
+
+.registration-form__field input:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.2);
+    border-color: #2563eb;
+}
+
+.registration-form__field input:disabled {
+    background: #f2f4f7;
+    cursor: wait;
+}
+
+.registration-form__submit {
+    justify-self: start;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    background: #2563eb;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registration-form__submit:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.registration-form__submit:disabled {
+    background: #98a2b3;
+    cursor: wait;
+}
+
+.registration-form__status {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.6;
+}
+
+.registration-form__status_success {
+    color: #067647;
+    background: #ecfdf3;
+}
+
+.registration-form__status_error {
+    color: #b42318;
+    background: #fef3f2;
 }
 
 .posts-page__header p,
@@ -63,5 +229,31 @@ body {
 .post-card__content {
     margin: 0;
     white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+    .posts-page__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .posts-page__auth-links {
+        margin-top: 0;
+        justify-content: flex-end;
+    }
+
+    .registration-form__submit {
+        width: 100%;
+        justify-self: stretch;
+    }
+
+    .modal-backdrop {
+        align-items: flex-start;
+        padding-top: 48px;
+    }
+
+    .modal-card {
+        width: 100%;
+    }
 }
 

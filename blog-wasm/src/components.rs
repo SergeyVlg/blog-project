@@ -15,10 +15,9 @@ pub fn App() -> Element {
                 header {
                     class: "posts-page__header",
                     h1 { "Посты" }
-                    p { "Стартовая страница загружает список постов по HTTP GET запросу." }
                 }
 
-                match &*posts_resource.read_unchecked() {
+                match &*posts_resource.read() {
                     Some(Ok(response)) if response.posts.is_empty() => rsx! {
                         p {
                             class: "posts-page__state",

@@ -1,4 +1,4 @@
 pub mod api;
 pub mod components;
 
-pub use components::App;
+pub use components::HomePage;

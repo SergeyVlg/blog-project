@@ -2,16 +2,24 @@
 
 use crate::api::fetch_posts;
 
+use super::login_modal::LoginModal;
 use super::post_card::PostCard;
 use super::registration_modal::RegistrationModal;
 
 #[component]
 pub fn HomePage() -> Element {
     let posts_resource = use_resource(fetch_posts);
+    let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
     let mut registration_success = use_signal(|| Option::<String>::None);
 
+    let is_login_open = show_login();
     let is_registration_open = show_registration();
+    let login_action_label = if is_login_open {
+        "Скрыть вход"
+    } else {
+        "Вход"
+    };
     let registration_action_label = if is_registration_open {
         "Скрыть регистрацию"
     } else {
@@ -34,16 +42,28 @@ pub fn HomePage() -> Element {
                     nav {
                         class: "posts-page__auth-links",
 
-                        span {
-                            class: "posts-page__auth-link posts-page__auth-link_disabled",
-                            "Вход"
+                        button {
+                            class: "posts-page__auth-link",
+                            r#type: "button",
+                            onclick: move |_| {
+                                let next_state = !show_login();
+                                show_login.set(next_state);
+                                if next_state {
+                                    show_registration.set(false);
+                                }
+                            },
+                            "{login_action_label}"
                         }
 
                         button {
                             class: "posts-page__auth-link",
                             r#type: "button",
                             onclick: move |_| {
-                                show_registration.set(!show_registration());
+                                let next_state = !show_registration();
+                                show_registration.set(next_state);
+                                if next_state {
+                                    show_login.set(false);
+                                }
                             },
                             "{registration_action_label}"
                         }
@@ -58,6 +78,17 @@ pub fn HomePage() -> Element {
                         }
                     },
                     None => rsx! {},
+                }
+
+                if is_login_open {
+                    LoginModal {
+                        on_close: move |_| {
+                            show_login.set(false);
+                        },
+                        on_success: move |_| {
+                            show_login.set(false);
+                        }
+                    }
                 }
 
                 if is_registration_open {

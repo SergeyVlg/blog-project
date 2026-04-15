@@ -39,7 +39,7 @@ where
         }
 
         let hash = jwt::hash_password(&password).map_err(|err| BlogError::Internal(err.to_string()))?;
-        let user = User::new(name, email.to_lowercase(), hash);
+        let user = User::new(name.to_lowercase(), email.to_lowercase(), hash);
         let token = self.keys
             .generate_token(user.id, user.name.to_string())
             .map_err(|err| BlogError::Internal(err.to_string()))?;
@@ -60,7 +60,7 @@ where
             .find_by_name(&name.to_lowercase())
             .await
             .map_err(BlogError::from)?
-            .ok_or_else(|| BlogError::NotFound(format!("User with email {} not found", name)))?;
+            .ok_or_else(|| BlogError::NotFound(format!("User with name {} not found", name)))?;
 
         let valid = jwt::verify_password(password, &user.password_hash)
             .map_err(|err| BlogError::Internal(err.to_string()))?;

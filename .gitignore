@@ -27,3 +27,5 @@ target
 .idea/
 */Cargo.lock
 Cargo.lock
+blog-wasm/dist/
+blog-server/.env

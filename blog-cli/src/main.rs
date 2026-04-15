@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 const DEFAULT_HTTP_ADDRESS: &str = "http://localhost:8080";
 const DEFAULT_GRPC_ADDRESS: &str = "http://localhost:50051";
+const TOKEN_FILE: &str = ".blog_token";
 
 #[derive(Parser)]
 #[command(name = "blog", about = "CLI-утилита для работы с блогом", version)]
@@ -66,7 +67,7 @@ enum Commands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::try_parse()?;
-    let token = fs::read_to_string(".blog_token")
+    let token = fs::read_to_string(TOKEN_FILE)
         .await
         .ok();
 
@@ -117,9 +118,11 @@ where
 {
     let user_with_token = client.register(name, email, password).await?;
     let user = user_with_token.user;
-    client.set_token(user_with_token.token); //TODO save to file
-
     println!("Пользователь зарегистрирован: {} ({})", user.name, user.id);
+
+    let token = user_with_token.token.clone();
+    client.set_token(user_with_token.token);
+    tokio::fs::write(TOKEN_FILE, token).await?;
 
     Ok(())
 }
@@ -130,9 +133,12 @@ where
 {
     let user_with_token = client.login(name, password).await?;
     let user = user_with_token.user;
-    client.set_token(user_with_token.token); //TODO save to file
 
     println!("Вход выполнен: {} ({})", user.name, user.id);
+
+    let token = user_with_token.token.clone();
+    client.set_token(user_with_token.token);
+    tokio::fs::write(TOKEN_FILE, token).await?;
 
     Ok(())
 }

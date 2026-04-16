@@ -19,12 +19,12 @@ pub fn HomePage() -> Element {
     let mut show_registration = use_signal(|| false);
     let mut show_new_post = use_signal(|| false);
     let mut registration_success = use_signal(|| Option::<String>::None);
-    let mut has_token = use_signal(|| storage::load_token().is_some());
+    let mut auth = use_signal(storage::Auth::new);
 
     let is_login_open = show_login();
     let is_registration_open = show_registration();
     let is_new_post_open = show_new_post();
-    let is_authenticated = has_token();
+    let is_authenticated = auth().is_authenticated();
     let login_action_label = if is_login_open {
         "Скрыть вход"
     } else {
@@ -57,8 +57,9 @@ pub fn HomePage() -> Element {
                                 class: "posts-page__auth-link",
                                 r#type: "button",
                                 onclick: move |_| {
-                                    storage::clear_token();
-                                    has_token.set(false);
+                                    let mut next_auth = auth();
+                                    next_auth.clear();
+                                    auth.set(next_auth);
                                     show_login.set(false);
                                     show_registration.set(false);
                                     show_new_post.set(false);
@@ -112,7 +113,7 @@ pub fn HomePage() -> Element {
                         },
                         on_success: move |_| {
                             show_login.set(false);
-                            has_token.set(true);
+                            auth.set(storage::Auth::new());
                         }
                     }
                 }
@@ -125,7 +126,7 @@ pub fn HomePage() -> Element {
                         on_success: move |message: String| {
                             registration_success.set(Some(message));
                             show_registration.set(false);
-                            has_token.set(true);
+                            auth.set(storage::Auth::new());
                         }
                     }
                 }

@@ -297,9 +297,32 @@ body {
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
+.post-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
 .post-card__title {
-    margin: 0 0 12px;
+    margin: 0;
     font-size: 1.5rem;
+}
+
+.post-card__edit-action {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.post-card__edit-action:hover {
+    color: #1d4ed8;
 }
 
 .post-card__content {
@@ -324,6 +347,11 @@ body {
         justify-self: auto;
         margin-top: 0;
         justify-content: flex-end;
+    }
+
+    .post-card__header {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .registration-form__submit {

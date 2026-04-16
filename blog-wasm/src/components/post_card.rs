@@ -1,15 +1,32 @@
 ﻿use blog_client::Post;
 use dioxus::prelude::*;
 
+use crate::storage;
+
 #[component]
 pub(crate) fn PostCard(post: Post) -> Element {
+    let author_id = post.author_id.to_string();
+    let can_edit = storage::Auth::new().is_author_of(author_id.as_str());
+
     rsx! {
         article {
             class: "post-card",
 
-            h2 {
-                class: "post-card__title",
-                "{post.title}"
+            div {
+                class: "post-card__header",
+
+                h2 {
+                    class: "post-card__title",
+                    "{post.title}"
+                }
+
+                if can_edit {
+                    button {
+                        class: "post-card__edit-action",
+                        r#type: "button",
+                        "Редактировать"
+                    }
+                }
             }
 
             p {

@@ -46,7 +46,11 @@ pub async fn register_user(name: String, email: String, password: String) -> Res
         .await
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
 
-    storage::save_token(payload.token.as_str());
+    storage::Auth {
+        user_id: Some(payload.user.id.to_string()),
+        token: Some(payload.token.clone()),
+    }
+    .save();
 
     Ok(format!("Пользователь «{}» успешно зарегистрирован.", payload.user.name))
 }
@@ -76,13 +80,18 @@ pub async fn login_user(name: String, password: String) -> Result<(), String> {
         .await
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
 
-    storage::save_token(payload.token.as_str());
+    storage::Auth {
+        user_id: Some(payload.user.id.to_string()),
+        token: Some(payload.token.clone()),
+    }
+    .save();
 
     Ok(())
 }
 
 pub async fn create_post(title: String, content: String) -> Result<Post, String> {
-    let token = storage::load_token()
+    let token = storage::Auth::new()
+        .token
         .ok_or_else(|| "Требуется авторизация для создания поста.".to_string())?;
 
     let response = Request::post(&format!("{API_BASE_URL}{CREATE_POST_PATH}"))

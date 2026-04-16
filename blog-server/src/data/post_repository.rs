@@ -45,13 +45,15 @@ impl PostRepository for PostgresPostRepository {
         sqlx::query(
             r#"
             INSERT INTO posts (id, title, content, author_id, created_at, updated_at)
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, $5, $6)
             "#,
         )
             .bind(post.id)
             .bind(&post.title)
             .bind(&post.content)
             .bind(&post.author_id)
+            .bind(&post.created_at)
+            .bind(&post.updated_at)
             .execute(&self.pool)
             .await
             .map_err(|e| {
@@ -70,7 +72,7 @@ impl PostRepository for PostgresPostRepository {
             UPDATE posts
             SET title = $1, content = $2, updated_at = NOW()
             WHERE id = $3 AND author_id = $4
-            RETURNING id, author_id, title, content, created_at
+            RETURNING id, author_id, title, content, created_at, updated_at
             "#,
         )
             .bind(title)

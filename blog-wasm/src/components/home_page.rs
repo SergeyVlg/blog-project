@@ -142,24 +142,26 @@ pub fn HomePage() -> Element {
                     }
                 }
 
-                div {
-                    class: "posts-page__actions",
+                if !is_new_post_open {
+                    div {
+                        class: "posts-page__actions",
 
-                    button {
-                        class: "posts-page__primary-action",
-                        r#type: "button",
-                        disabled: !is_authenticated,
-                        title: if is_authenticated {
-                            ""
-                        } else {
-                            "Кнопка доступна только после авторизации."
-                        },
-                        onclick: move |_| {
-                            if is_authenticated {
-                                show_new_post.set(true);
-                            }
-                        },
-                        "Новый пост"
+                        button {
+                            class: "posts-page__primary-action",
+                            r#type: "button",
+                            disabled: !is_authenticated,
+                            title: if is_authenticated {
+                                ""
+                            } else {
+                                "Кнопка доступна только после авторизации."
+                            },
+                            onclick: move |_| {
+                                if is_authenticated {
+                                    show_new_post.set(true);
+                                }
+                            },
+                            "Новый пост"
+                        }
                     }
                 }
 

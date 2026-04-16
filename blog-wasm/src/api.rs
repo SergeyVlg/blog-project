@@ -2,6 +2,8 @@
 use blog_client::GetPostsResponse;
 use gloo_net::http::Request;
 
+use crate::storage;
+
 const POSTS_URL: &str = "http://127.0.0.1:8080/api/public/posts?limit=10&offset=0";
 const REGISTER_URL: &str = "http://127.0.0.1:8080/api/public/register";
 const LOGIN_URL: &str = "http://127.0.0.1:8080/api/public/login";
@@ -41,6 +43,8 @@ pub async fn register_user(name: String, email: String, password: String) -> Res
         .await
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
 
+    storage::save_token(payload.token.as_str());
+
     Ok(format!("Пользователь «{}» успешно зарегистрирован.", payload.user.name))
 }
 
@@ -64,10 +68,12 @@ pub async fn login_user(name: String, password: String) -> Result<(), String> {
         return Err(message);
     }
 
-    response
+    let payload = response
         .json::<UserWithToken>()
         .await
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
+
+    storage::save_token(payload.token.as_str());
 
     Ok(())
 }

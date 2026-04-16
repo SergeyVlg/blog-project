@@ -42,7 +42,7 @@ impl BlogTransport for HttpClient {
         let url = format!("{}/api/public/login", self.url);
         let req = LoginRequest { name, password };
         let user = self.client
-            .get(url)
+            .post(url)
             .json(&req)
             .send()
             .await?

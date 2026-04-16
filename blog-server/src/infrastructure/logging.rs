@@ -4,7 +4,7 @@ pub(crate) fn init_logging() {
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "actix_web=info,my_app=debug".into())
+                .unwrap_or_else(|_| "actix_web=info,blog_server=debug".into())
         )
         .with(
             tracing_subscriber::fmt::layer()

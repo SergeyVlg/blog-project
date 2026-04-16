@@ -29,3 +29,5 @@ target
 Cargo.lock
 blog-wasm/dist/
 blog-server/.env
+blog-cli/.blog_token
+blog-server/.env

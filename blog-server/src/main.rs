@@ -20,7 +20,7 @@ use crate::data::user_repository::PostgresUserRepository;
 use crate::infrastructure::jwt::JwtKeys;
 use crate::presentation::grpc_service::BlogGrpcService;
 use crate::presentation::http_handlers;
-use crate::presentation::middleware::JwtAuthMiddleware;
+use crate::presentation::middleware::{JwtAuthErrorLogger, JwtAuthMiddleware};
 use crate::presentation::proto::blog::blog_service_server::BlogServiceServer;
 
 #[actix_web::main]
@@ -88,6 +88,7 @@ async fn http_server(config: Config,
             .service(
                 web::scope("/api/protected")
                     .wrap(JwtAuthMiddleware::new(auth_service.keys().clone()))
+                    .wrap(JwtAuthErrorLogger::new())
                     .service(http_handlers::protected::scope()),
             )
     })

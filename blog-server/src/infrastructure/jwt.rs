@@ -22,7 +22,7 @@ impl JwtKeys {
         let claims = Claims {
             user_id: user_id.to_string(),
             user_name,
-            expiration: chrono::Utc::now()
+            exp: chrono::Utc::now()
                 .checked_add_signed(chrono::Duration::hours(1))
                 .ok_or_else(|| jsonwebtoken::errors::new_error(ErrorKind::ExpiredSignature))?
                 .timestamp() as usize,
@@ -48,7 +48,7 @@ impl JwtKeys {
 pub struct Claims {
     pub user_id: String, //UUid
     pub user_name: String,
-    pub expiration: usize,
+    pub exp: usize,
 }
 
 pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {

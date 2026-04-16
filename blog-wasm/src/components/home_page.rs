@@ -19,11 +19,12 @@ pub fn HomePage() -> Element {
     let mut show_registration = use_signal(|| false);
     let mut show_new_post = use_signal(|| false);
     let mut registration_success = use_signal(|| Option::<String>::None);
-    let has_token = storage::load_token().is_some();
+    let mut has_token = use_signal(|| storage::load_token().is_some());
 
     let is_login_open = show_login();
     let is_registration_open = show_registration();
     let is_new_post_open = show_new_post();
+    let is_authenticated = has_token();
     let login_action_label = if is_login_open {
         "Скрыть вход"
     } else {
@@ -51,30 +52,45 @@ pub fn HomePage() -> Element {
                     nav {
                         class: "posts-page__auth-links",
 
-                        button {
-                            class: "posts-page__auth-link",
-                            r#type: "button",
-                            onclick: move |_| {
-                                let next_state = !show_login();
-                                show_login.set(next_state);
-                                if next_state {
-                                    show_registration.set(false);
-                                }
-                            },
-                            "{login_action_label}"
-                        }
-
-                        button {
-                            class: "posts-page__auth-link",
-                            r#type: "button",
-                            onclick: move |_| {
-                                let next_state = !show_registration();
-                                show_registration.set(next_state);
-                                if next_state {
+                        if is_authenticated {
+                            button {
+                                class: "posts-page__auth-link",
+                                r#type: "button",
+                                onclick: move |_| {
+                                    storage::clear_token();
+                                    has_token.set(false);
                                     show_login.set(false);
-                                }
-                            },
-                            "{registration_action_label}"
+                                    show_registration.set(false);
+                                    show_new_post.set(false);
+                                },
+                                "Выйти"
+                            }
+                        } else {
+                            button {
+                                class: "posts-page__auth-link",
+                                r#type: "button",
+                                onclick: move |_| {
+                                    let next_state = !show_login();
+                                    show_login.set(next_state);
+                                    if next_state {
+                                        show_registration.set(false);
+                                    }
+                                },
+                                "{login_action_label}"
+                            }
+
+                            button {
+                                class: "posts-page__auth-link",
+                                r#type: "button",
+                                onclick: move |_| {
+                                    let next_state = !show_registration();
+                                    show_registration.set(next_state);
+                                    if next_state {
+                                        show_login.set(false);
+                                    }
+                                },
+                                "{registration_action_label}"
+                            }
                         }
                     }
                 }
@@ -96,6 +112,7 @@ pub fn HomePage() -> Element {
                         },
                         on_success: move |_| {
                             show_login.set(false);
+                            has_token.set(true);
                         }
                     }
                 }
@@ -108,6 +125,7 @@ pub fn HomePage() -> Element {
                         on_success: move |message: String| {
                             registration_success.set(Some(message));
                             show_registration.set(false);
+                            has_token.set(true);
                         }
                     }
                 }
@@ -130,14 +148,14 @@ pub fn HomePage() -> Element {
                     button {
                         class: "posts-page__primary-action",
                         r#type: "button",
-                        disabled: !has_token,
-                        title: if has_token {
+                        disabled: !is_authenticated,
+                        title: if is_authenticated {
                             ""
                         } else {
                             "Кнопка доступна только после авторизации."
                         },
                         onclick: move |_| {
-                            if has_token {
+                            if is_authenticated {
                                 show_new_post.set(true);
                             }
                         },

@@ -4,19 +4,26 @@ use crate::api::fetch_posts;
 use crate::storage;
 
 use super::login_modal::LoginModal;
+use super::post_modal::CreatePostModal;
 use super::post_card::PostCard;
 use super::registration_modal::RegistrationModal;
 
 #[component]
 pub fn HomePage() -> Element {
-    let posts_resource = use_resource(fetch_posts);
+    let mut posts_reload_key = use_signal(|| 0_u64);
+    let posts_resource = use_resource(move || {
+        let _ = posts_reload_key();
+        fetch_posts()
+    });
     let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
+    let mut show_new_post = use_signal(|| false);
     let mut registration_success = use_signal(|| Option::<String>::None);
     let has_token = storage::load_token().is_some();
 
     let is_login_open = show_login();
     let is_registration_open = show_registration();
+    let is_new_post_open = show_new_post();
     let login_action_label = if is_login_open {
         "Скрыть вход"
     } else {
@@ -105,6 +112,18 @@ pub fn HomePage() -> Element {
                     }
                 }
 
+                if is_new_post_open {
+                    CreatePostModal {
+                        on_close: move |_| {
+                            show_new_post.set(false);
+                        },
+                        on_success: move |_| {
+                            show_new_post.set(false);
+                            posts_reload_key.set(posts_reload_key() + 1);
+                        }
+                    }
+                }
+
                 div {
                     class: "posts-page__actions",
 
@@ -116,6 +135,11 @@ pub fn HomePage() -> Element {
                             ""
                         } else {
                             "Кнопка доступна только после авторизации."
+                        },
+                        onclick: move |_| {
+                            if has_token {
+                                show_new_post.set(true);
+                            }
                         },
                         "Новый пост"
                     }

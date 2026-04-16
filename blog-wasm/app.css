@@ -146,6 +146,32 @@ body {
     color: #1f2937;
 }
 
+.modal-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.modal-card__secondary-action {
+    padding: 12px 20px;
+    border: 1px solid #d0d5dd;
+    border-radius: 12px;
+    background: white;
+    color: #344054;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.modal-card__secondary-action:hover:not(:disabled) {
+    background: #f8fafc;
+}
+
+.modal-card__secondary-action:disabled {
+    color: #98a2b3;
+    cursor: wait;
+}
+
 .registration-form {
     display: grid;
     gap: 20px;
@@ -177,6 +203,27 @@ body {
 }
 
 .registration-form__field input:disabled {
+    background: #f2f4f7;
+    cursor: wait;
+}
+
+.registration-form__field textarea {
+    min-height: 180px;
+    resize: vertical;
+    padding: 12px 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 12px;
+    font: inherit;
+    color: #1f2937;
+    background: #fff;
+}
+
+.registration-form__field textarea:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.2);
+    border-color: #2563eb;
+}
+
+.registration-form__field textarea:disabled {
     background: #f2f4f7;
     cursor: wait;
 }

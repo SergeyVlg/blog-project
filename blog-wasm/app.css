@@ -74,6 +74,32 @@ body {
     background: #ecfdf3;
 }
 
+.posts-page__actions {
+    display: flex;
+    justify-content: flex-start;
+    margin: 0 0 24px;
+}
+
+.posts-page__primary-action {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    background: #2563eb;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.posts-page__primary-action:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.posts-page__primary-action:disabled {
+    background: #98a2b3;
+    cursor: not-allowed;
+}
+
 .modal-backdrop {
     position: fixed;
     inset: 0;

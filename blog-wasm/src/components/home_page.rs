@@ -1,6 +1,7 @@
 ﻿use dioxus::prelude::*;
 
 use crate::api::fetch_posts;
+use crate::storage;
 
 use super::login_modal::LoginModal;
 use super::post_card::PostCard;
@@ -12,6 +13,7 @@ pub fn HomePage() -> Element {
     let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
     let mut registration_success = use_signal(|| Option::<String>::None);
+    let has_token = storage::load_token().is_some();
 
     let is_login_open = show_login();
     let is_registration_open = show_registration();
@@ -100,6 +102,22 @@ pub fn HomePage() -> Element {
                             registration_success.set(Some(message));
                             show_registration.set(false);
                         }
+                    }
+                }
+
+                div {
+                    class: "posts-page__actions",
+
+                    button {
+                        class: "posts-page__primary-action",
+                        r#type: "button",
+                        disabled: !has_token,
+                        title: if has_token {
+                            ""
+                        } else {
+                            "Кнопка доступна только после авторизации."
+                        },
+                        "Новый пост"
                     }
                 }
 

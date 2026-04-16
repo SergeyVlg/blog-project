@@ -113,8 +113,6 @@ impl BlogServiceContract for BlogGrpcService {
     }
 
     async fn list_posts(&self, request: Request<ListPostsRequest>) -> Result<Response<ListPostsResponse>, Status> {
-        self.ensure_authentication(request.metadata()).await?;
-
         let req = request.into_inner();
         let data_posts = self.blog_service.list_posts(req.limit, req.offset).await?;
         let total = data_posts.len() as u32;

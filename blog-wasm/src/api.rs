@@ -21,7 +21,7 @@ pub async fn fetch_posts() -> Result<GetPostsResponse, String> {
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
 }
 
-pub async fn register_user(name: String, email: String, password: String) -> Result<String, String> {
+pub async fn register_user(name: String, email: String, password: String) -> Result<UserWithToken, String> {
     let response = Request::post(&format!("{API_BASE_URL}{REGISTER_PATH}"))
         .json(&RegisterRequest { name, email, password })
         .map_err(|error| format!("Не удалось подготовить запрос регистрации: {error}"))?
@@ -41,21 +41,13 @@ pub async fn register_user(name: String, email: String, password: String) -> Res
         return Err(format!("Регистрация не выполнена: {message}"));
     }
 
-    let payload = response
+    response
         .json::<UserWithToken>()
         .await
-        .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
-
-    storage::Auth {
-        user_id: Some(payload.user.id.to_string()),
-        token: Some(payload.token.clone()),
-    }
-    .save();
-
-    Ok(format!("Пользователь «{}» успешно зарегистрирован.", payload.user.name))
+        .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
 }
 
-pub async fn login_user(name: String, password: String) -> Result<(), String> {
+pub async fn login_user(name: String, password: String) -> Result<UserWithToken, String> {
     let response = Request::post(&format!("{API_BASE_URL}{LOGIN_PATH}"))
         .json(&LoginRequest { name, password })
         .map_err(|error| format!("Не удалось подготовить запрос входа: {error}"))?
@@ -75,18 +67,10 @@ pub async fn login_user(name: String, password: String) -> Result<(), String> {
         return Err(message);
     }
 
-    let payload = response
+    response
         .json::<UserWithToken>()
         .await
-        .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))?;
-
-    storage::Auth {
-        user_id: Some(payload.user.id.to_string()),
-        token: Some(payload.token.clone()),
-    }
-    .save();
-
-    Ok(())
+        .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
 }
 
 pub async fn create_post(title: String, content: String) -> Result<Post, String> {

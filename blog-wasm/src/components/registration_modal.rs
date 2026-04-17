@@ -1,6 +1,7 @@
 ﻿use dioxus::prelude::*;
 
 use crate::api::register_user;
+use crate::storage;
 
 #[derive(Clone, PartialEq)]
 enum RegistrationStatus {
@@ -15,6 +16,7 @@ pub(crate) fn RegistrationModal(on_close: EventHandler<()>, on_success: EventHan
     let mut registration_email = use_signal(String::new);
     let mut registration_password = use_signal(String::new);
     let mut registration_status = use_signal(|| RegistrationStatus::Idle);
+    let mut auth = use_context::<Signal<storage::Auth>>();
 
     let is_submitting = matches!(&*registration_status.read(), RegistrationStatus::Submitting);
     let close_from_backdrop = on_close.clone();
@@ -68,12 +70,23 @@ pub(crate) fn RegistrationModal(on_close: EventHandler<()>, on_success: EventHan
 
                         spawn(async move {
                             match register_user(name, email, password).await {
-                                Ok(message) => {
+                                Ok(payload) => {
+                                    let mut next_auth = auth();
+                                    let success_message = format!(
+                                        "Пользователь «{}» успешно зарегистрирован.",
+                                        payload.user.name
+                                    );
+
+                                    next_auth.user_id = Some(payload.user.id.to_string());
+                                    next_auth.token = Some(payload.token);
+                                    next_auth.save();
+                                    auth.set(next_auth);
+
                                     registration_name.set(String::new());
                                     registration_email.set(String::new());
                                     registration_password.set(String::new());
                                     registration_status.set(RegistrationStatus::Idle);
-                                    on_success.call(message);
+                                    on_success.call(success_message);
                                 }
                                 Err(error) => {
                                     registration_status.set(RegistrationStatus::Error(error));

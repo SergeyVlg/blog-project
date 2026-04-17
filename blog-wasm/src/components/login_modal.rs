@@ -1,6 +1,7 @@
 ﻿use dioxus::prelude::*;
 
 use crate::api::login_user;
+use crate::storage;
 
 #[derive(Clone, PartialEq)]
 enum LoginStatus {
@@ -14,6 +15,7 @@ pub(crate) fn LoginModal(on_close: EventHandler<()>, on_success: EventHandler<()
     let mut login_name = use_signal(String::new);
     let mut login_password = use_signal(String::new);
     let mut login_status = use_signal(|| LoginStatus::Idle);
+    let mut auth = use_context::<Signal<storage::Auth>>();
 
     let is_submitting = matches!(&*login_status.read(), LoginStatus::Submitting);
     let close_from_backdrop = on_close.clone();
@@ -66,7 +68,13 @@ pub(crate) fn LoginModal(on_close: EventHandler<()>, on_success: EventHandler<()
 
                         spawn(async move {
                             match login_user(name, password).await {
-                                Ok(()) => {
+                                Ok(payload) => {
+                                    let mut next_auth = auth();
+                                    next_auth.user_id = Some(payload.user.id.to_string());
+                                    next_auth.token = Some(payload.token);
+                                    next_auth.save();
+                                    auth.set(next_auth);
+
                                     login_name.set(String::new());
                                     login_password.set(String::new());
                                     login_status.set(LoginStatus::Idle);

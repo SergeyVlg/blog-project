@@ -21,6 +21,8 @@ pub fn HomePage() -> Element {
     let mut registration_success = use_signal(|| Option::<String>::None);
     let mut auth = use_signal(storage::Auth::new);
 
+    use_context_provider(|| auth);
+
     let is_login_open = show_login();
     let is_registration_open = show_registration();
     let is_new_post_open = show_new_post();
@@ -113,7 +115,6 @@ pub fn HomePage() -> Element {
                         },
                         on_success: move |_| {
                             show_login.set(false);
-                            auth.set(storage::Auth::new());
                         }
                     }
                 }
@@ -126,7 +127,6 @@ pub fn HomePage() -> Element {
                         on_success: move |message: String| {
                             registration_success.set(Some(message));
                             show_registration.set(false);
-                            auth.set(storage::Auth::new());
                         }
                     }
                 }

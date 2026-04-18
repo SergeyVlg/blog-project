@@ -1,7 +1,7 @@
 use blog_client::Post;
 use dioxus::prelude::*;
 
-use crate::api::fetch_posts;
+use crate::api::{delete_post, fetch_posts};
 
 use super::post_card::PostCard;
 use super::post_modal::{PostModal, PostModalMode};
@@ -15,6 +15,8 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
     });
     let mut show_new_post = use_signal(|| false);
     let mut editing_post = use_signal(|| Option::<Post>::None);
+    let mut deleting_post_id = use_signal(|| Option::<String>::None);
+    let mut post_action_error = use_signal(|| Option::<String>::None);
 
     let is_new_post_open = show_new_post();
     let editing_post_value = editing_post();
@@ -34,6 +36,8 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
         None => String::new(),
     };
 
+    let current_editing_post_id = editing_post_value.as_ref().map(|post| post.id);
+
     rsx! {
         if let Some(mode) = post_modal_mode.clone() {
             if let Some(token) = token.clone() {
@@ -48,10 +52,21 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
                     on_success: move |_| {
                         show_new_post.set(false);
                         editing_post.set(None);
+                        post_action_error.set(None);
                         posts_reload_key.set(posts_reload_key() + 1);
                     }
                 }
             }
+        }
+
+        match &*post_action_error.read() {
+            Some(message) => rsx! {
+                p {
+                    class: "posts-page__state posts-page__state_error",
+                    "{message}"
+                }
+            },
+            None => rsx! {},
         }
 
         if !is_new_post_open && !is_edit_post_open {
@@ -69,6 +84,7 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
                     },
                     onclick: move |_| {
                         if is_authenticated {
+                            post_action_error.set(None);
                             editing_post.set(None);
                             show_new_post.set(true);
                         }
@@ -92,9 +108,43 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
                         PostCard {
                             key: "{post.id}",
                             post: post.clone(),
+                            show_delete: current_editing_post_id != Some(post.id),
+                            is_deleting: deleting_post_id() == Some(post.id.to_string()),
                             on_edit: move |post: Post| {
+                                post_action_error.set(None);
                                 show_new_post.set(false);
                                 editing_post.set(Some(post));
+                            },
+                            on_delete: {
+                                let delete_token = token.clone();
+
+                                move |post: Post| {
+                                    if deleting_post_id().is_some() {
+                                        return;
+                                    }
+
+                                    let Some(token) = delete_token.clone() else {
+                                        return;
+                                    };
+
+                                    let post_id = post.id.to_string();
+
+                                    post_action_error.set(None);
+                                    deleting_post_id.set(Some(post_id.clone()));
+
+                                    spawn(async move {
+                                        match delete_post(token, post_id).await {
+                                            Ok(()) => {
+                                                deleting_post_id.set(None);
+                                                posts_reload_key.set(posts_reload_key() + 1);
+                                            }
+                                            Err(error) => {
+                                                deleting_post_id.set(None);
+                                                post_action_error.set(Some(error));
+                                            }
+                                        }
+                                    });
+                                }
                             }
                         }
                     },

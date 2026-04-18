@@ -316,6 +316,12 @@ body {
     font-size: 1.5rem;
 }
 
+.post-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .post-card__edit-action {
     padding: 0;
     border: none;
@@ -329,6 +335,27 @@ body {
 
 .post-card__edit-action:hover {
     color: #1d4ed8;
+}
+
+.post-card__delete-action {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #dc2626;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.post-card__delete-action:hover {
+    color: #b91c1c;
+}
+
+.post-card__edit-action:disabled,
+.post-card__delete-action:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
 
 .post-card__content {

@@ -125,3 +125,25 @@ pub async fn update_post(token: String, post_id: String, title: String, content:
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
 }
 
+pub async fn delete_post(token: String, post_id: String) -> Result<(), String> {
+    let response = Request::delete(&format!("{API_BASE_URL}{POST_PATH}/{post_id}"))
+        .header("Authorization", &format!("Bearer {token}"))
+        .send()
+        .await
+        .map_err(|error| format!("Не удалось выполнить запрос удаления поста: {error}"))?;
+
+    if !response.ok() {
+        let status = response.status();
+        let details = response.text().await.unwrap_or_default();
+        let message = if details.trim().is_empty() {
+            format!("код ответа {status}")
+        } else {
+            details
+        };
+
+        return Err(format!("Не удалось удалить пост: {message}"));
+    }
+
+    Ok(())
+}
+

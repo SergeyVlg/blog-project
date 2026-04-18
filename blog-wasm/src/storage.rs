@@ -61,9 +61,5 @@ impl Auth {
     pub fn is_authenticated(&self) -> bool {
         self.token.is_some()
     }
-
-    pub fn is_author_of(&self, author_id: &str) -> bool {
-        self.is_authenticated() && self.user_id.as_deref() == Some(author_id)
-    }
 }
 

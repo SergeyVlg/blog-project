@@ -26,7 +26,10 @@ pub fn HomePage() -> Element {
     let is_login_open = show_login();
     let is_registration_open = show_registration();
     let is_new_post_open = show_new_post();
+
+    let token = auth().token.clone();
     let is_authenticated = auth().is_authenticated();
+
     let login_action_label = if is_login_open {
         "Скрыть вход"
     } else {
@@ -132,13 +135,16 @@ pub fn HomePage() -> Element {
                 }
 
                 if is_new_post_open {
-                    CreatePostModal {
-                        on_close: move |_| {
-                            show_new_post.set(false);
-                        },
-                        on_success: move |_| {
-                            show_new_post.set(false);
-                            posts_reload_key.set(posts_reload_key() + 1);
+                    if let Some(token) = token.clone() {
+                        CreatePostModal {
+                            token,
+                            on_close: move |_| {
+                                show_new_post.set(false);
+                            },
+                            on_success: move |_| {
+                                show_new_post.set(false);
+                                posts_reload_key.set(posts_reload_key() + 1);
+                            }
                         }
                     }
                 }

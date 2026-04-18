@@ -6,7 +6,9 @@ use crate::storage;
 #[component]
 pub(crate) fn PostCard(post: Post) -> Element {
     let author_id = post.author_id.to_string();
-    let can_edit = storage::Auth::new().is_author_of(author_id.as_str());
+    let auth = use_context::<Signal<storage::Auth>>();
+    let auth = auth.read();
+    let can_edit = auth.is_authenticated() && auth.user_id.as_deref() == Some(author_id.as_str());
 
     rsx! {
         article {

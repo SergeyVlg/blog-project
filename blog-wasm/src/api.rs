@@ -2,8 +2,6 @@
 use blog_client::{GetPostsResponse, Post};
 use gloo_net::http::Request;
 
-use crate::storage;
-
 const API_BASE_URL: &str = "http://127.0.0.1:8080/api";
 
 const POSTS_PATH: &str = "/public/posts?limit=10&offset=0";
@@ -73,10 +71,7 @@ pub async fn login_user(name: String, password: String) -> Result<UserWithToken,
         .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
 }
 
-pub async fn create_post(title: String, content: String) -> Result<Post, String> {
-    let token = storage::Auth::new()
-        .token
-        .ok_or_else(|| "Требуется авторизация для создания поста.".to_string())?;
+pub async fn create_post(token: String, title: String, content: String) -> Result<Post, String> {
 
     let response = Request::post(&format!("{API_BASE_URL}{CREATE_POST_PATH}"))
         .header("Authorization", &format!("Bearer {token}"))

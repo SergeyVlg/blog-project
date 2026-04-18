@@ -1,6 +1,7 @@
 ﻿use dioxus::prelude::*;
 
 use crate::api::create_post;
+use crate::storage;
 
 #[derive(Clone, PartialEq)]
 enum CreatePostStatus {
@@ -10,7 +11,7 @@ enum CreatePostStatus {
 }
 
 #[component]
-pub(crate) fn CreatePostModal(on_close: EventHandler<()>, on_success: EventHandler<()>) -> Element {
+pub(crate) fn CreatePostModal(token: String, on_close: EventHandler<()>, on_success: EventHandler<()>) -> Element {
     let mut post_title = use_signal(String::new);
     let mut post_content = use_signal(String::new);
     let mut post_status = use_signal(|| CreatePostStatus::Idle);
@@ -63,9 +64,10 @@ pub(crate) fn CreatePostModal(on_close: EventHandler<()>, on_success: EventHandl
                         post_status.set(CreatePostStatus::Submitting);
 
                         let on_success = success_handler.clone();
+                        let token = token.clone();
 
                         spawn(async move {
-                            match create_post(title, content).await {
+                            match create_post(token, title, content).await {
                                 Ok(_) => {
                                     post_title.set(String::new());
                                     post_content.set(String::new());

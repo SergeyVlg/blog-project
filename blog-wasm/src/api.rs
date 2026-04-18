@@ -7,7 +7,7 @@ const API_BASE_URL: &str = "http://127.0.0.1:8080/api";
 const POSTS_PATH: &str = "/public/posts?limit=10&offset=0";
 const REGISTER_PATH: &str = "/public/register";
 const LOGIN_PATH: &str = "/public/login";
-const CREATE_POST_PATH: &str = "/protected/posts";
+const POST_PATH: &str = "/protected/posts";
 
 pub async fn fetch_posts() -> Result<GetPostsResponse, String> {
     Request::get(&format!("{API_BASE_URL}{POSTS_PATH}"))
@@ -72,7 +72,7 @@ pub async fn login_user(name: String, password: String) -> Result<UserWithToken,
 }
 
 pub async fn create_post(token: String, title: String, content: String) -> Result<Post, String> {
-    let response = Request::post(&format!("{API_BASE_URL}{CREATE_POST_PATH}"))
+    let response = Request::post(&format!("{API_BASE_URL}{POST_PATH}"))
         .header("Authorization", &format!("Bearer {token}"))
         .json(&CreatePostRequest { title, content })
         .map_err(|error| format!("Не удалось подготовить запрос создания поста: {error}"))?
@@ -99,7 +99,7 @@ pub async fn create_post(token: String, title: String, content: String) -> Resul
 }
 
 pub async fn update_post(token: String, post_id: String, title: String, content: String) -> Result<Post, String> {
-    let response = Request::put(&format!("{API_BASE_URL}{CREATE_POST_PATH}/{post_id}"))
+    let response = Request::put(&format!("{API_BASE_URL}{POST_PATH}/{post_id}"))
         .header("Authorization", &format!("Bearer {token}"))
         .json(&UpdatePostRequest { title, content })
         .map_err(|error| format!("Не удалось подготовить запрос обновления поста: {error}"))?

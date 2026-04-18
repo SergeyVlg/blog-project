@@ -1,26 +1,14 @@
 ﻿use dioxus::prelude::*;
-use blog_client::Post;
-
-use crate::api::fetch_posts;
 use crate::storage;
 
 use super::login_modal::LoginModal;
-use super::post_modal::{PostModal, PostModalMode};
-use super::post_card::PostCard;
+use super::posts_section::PostsSection;
 use super::registration_modal::RegistrationModal;
 
 #[component]
 pub fn HomePage() -> Element {
-    let mut posts_reload_key = use_signal(|| 0_u64);
-    let posts_resource = use_resource(move || {
-        let _ = posts_reload_key();
-        fetch_posts()
-    });
     let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
-
-    let mut show_new_post = use_signal(|| false);
-    let mut editing_post = use_signal(|| Option::<Post>::None);
     let mut registration_success = use_signal(|| Option::<String>::None);
     let mut auth = use_signal(storage::Auth::new);
 
@@ -28,27 +16,14 @@ pub fn HomePage() -> Element {
 
     let is_login_open = show_login();
     let is_registration_open = show_registration();
-    let is_new_post_open = show_new_post();
-    let editing_post_value = editing_post();
-    let is_edit_post_open = editing_post_value.is_some();
-
-    let post_modal_mode = if let Some(post) = editing_post_value.clone() {
-        Some(PostModalMode::Edit(post))
-    } else if is_new_post_open {
-        Some(PostModalMode::Create)
-    } else {
-        None
+    let auth_state = auth();
+    let token = auth_state.token.clone();
+    let current_user_name = auth_state.user_name.clone();
+    let is_authenticated = auth_state.is_authenticated();
+    let posts_section_key = match (&auth_state.user_id, &auth_state.token) {
+        (Some(user_id), Some(_)) => format!("user-{user_id}"),
+        _ => "guest".to_string(),
     };
-
-    let modal_key = match &post_modal_mode {
-        Some(PostModalMode::Edit(post)) => format!("edit-{}", post.id),
-        Some(PostModalMode::Create) => "create".to_string(),
-        None => String::new(),
-    };
-
-    let token = auth().token.clone();
-    let current_user_name = auth().user_name.clone();
-    let is_authenticated = auth().is_authenticated();
 
     let login_action_label = if is_login_open {
         "Скрыть вход"
@@ -94,8 +69,6 @@ pub fn HomePage() -> Element {
                                     auth.set(next_auth);
                                     show_login.set(false);
                                     show_registration.set(false);
-                                    show_new_post.set(false);
-                                    editing_post.set(None);
                                 },
                                 "Выйти"
                             }
@@ -162,84 +135,10 @@ pub fn HomePage() -> Element {
                     }
                 }
 
-
-                if let Some(mode) = post_modal_mode.clone() {
-                    if let Some(token) = token.clone() {
-                        PostModal {
-                            key: "{modal_key}",
-                            token,
-                            mode,
-                            on_close: move |_| {
-                                show_new_post.set(false);
-                                editing_post.set(None);
-                            },
-                            on_success: move |_| {
-                                show_new_post.set(false);
-                                editing_post.set(None);
-                                posts_reload_key.set(posts_reload_key() + 1);
-                            }
-                        }
-                    }
-                }
-
-                if !is_new_post_open && !is_edit_post_open {
-                    div {
-                        class: "posts-page__actions",
-
-                        button {
-                            class: "posts-page__primary-action",
-                            r#type: "button",
-                            disabled: !is_authenticated,
-                            title: if is_authenticated {
-                                ""
-                            } else {
-                                "Кнопка доступна только после авторизации."
-                            },
-                            onclick: move |_| {
-                                if is_authenticated {
-                                    editing_post.set(None);
-                                    show_new_post.set(true);
-                                }
-                            },
-                            "Новый пост"
-                        }
-                    }
-                }
-
-                match &*posts_resource.read() {
-                    Some(Ok(response)) if response.posts.is_empty() => rsx! {
-                        p {
-                            class: "posts-page__state",
-                            "Постов пока нет."
-                        }
-                    },
-                    Some(Ok(response)) => rsx! {
-                        div {
-                            class: "posts-list",
-                            for post in response.posts.iter() {
-                                PostCard {
-                                    key: "{post.id}",
-                                    post: post.clone(),
-                                    on_edit: move |post: Post| {
-                                        show_new_post.set(false);
-                                        editing_post.set(Some(post));
-                                    }
-                                }
-                            },
-                        }
-                    },
-                    Some(Err(error)) => rsx! {
-                        p {
-                            class: "posts-page__state posts-page__state_error",
-                            "Ошибка загрузки постов: {error}"
-                        }
-                    },
-                    None => rsx! {
-                        p {
-                            class: "posts-page__state",
-                            "Загрузка постов..."
-                        }
-                    },
+                PostsSection {
+                    key: "{posts_section_key}",
+                    is_authenticated,
+                    token,
                 }
             }
         }

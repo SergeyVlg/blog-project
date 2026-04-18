@@ -4,6 +4,12 @@ use blog_client::Post;
 use crate::api::{create_post, update_post};
 
 #[derive(Clone, PartialEq)]
+pub(crate) enum PostModalMode {
+    Create,
+    Edit(Post),
+}
+
+#[derive(Clone, PartialEq)]
 enum PostModalStatus {
     Idle,
     Submitting,
@@ -13,28 +19,31 @@ enum PostModalStatus {
 #[component]
 pub(crate) fn PostModal(
     token: String,
-    post: Option<Post>,
+    mode: PostModalMode,
     on_close: EventHandler<()>,
     on_success: EventHandler<()>,
 ) -> Element {
-    let is_editing = post.is_some();
-    let post_id = post.as_ref().map(|post| post.id.to_string());
-    let initial_title = post.as_ref().map(|post| post.title.clone()).unwrap_or_default();
-    let initial_content = post.as_ref().map(|post| post.content.clone()).unwrap_or_default();
+    let (is_editing, post_id, initial_title, initial_content) = match &mode {
+        PostModalMode::Create => (false, None, String::new(), String::new()),
+        PostModalMode::Edit(post) => (
+            true,
+            Some(post.id.to_string()),
+            post.title.clone(),
+            post.content.clone(),
+        ),
+    };
+
     let mut post_title = use_signal(move || initial_title.clone());
     let mut post_content = use_signal(move || initial_content.clone());
     let mut post_status = use_signal(|| PostModalStatus::Idle);
 
     let is_submitting = matches!(&*post_status.read(), PostModalStatus::Submitting);
-    let close_from_backdrop = on_close.clone();
-    let close_from_button = on_close.clone();
     let cancel_button = on_close.clone();
     let success_handler = on_success.clone();
 
     rsx! {
         div {
             class: "modal-backdrop",
-            onclick: move |_| close_from_backdrop.call(()),
 
             div {
                 class: "modal-card",
@@ -46,13 +55,6 @@ pub(crate) fn PostModal(
                     h2 {
                         class: "modal-card__title",
                         if is_editing { "Редактировать пост" } else { "Новый пост" }
-                    }
-
-                    button {
-                        class: "modal-card__close",
-                        r#type: "button",
-                        onclick: move |_| close_from_button.call(()),
-                        "×"
                     }
                 }
 

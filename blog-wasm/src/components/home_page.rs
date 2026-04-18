@@ -5,7 +5,7 @@ use crate::api::fetch_posts;
 use crate::storage;
 
 use super::login_modal::LoginModal;
-use super::post_modal::PostModal;
+use super::post_modal::{PostModal, PostModalMode};
 use super::post_card::PostCard;
 use super::registration_modal::RegistrationModal;
 
@@ -18,6 +18,7 @@ pub fn HomePage() -> Element {
     });
     let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
+
     let mut show_new_post = use_signal(|| false);
     let mut editing_post = use_signal(|| Option::<Post>::None);
     let mut registration_success = use_signal(|| Option::<String>::None);
@@ -30,10 +31,20 @@ pub fn HomePage() -> Element {
     let is_new_post_open = show_new_post();
     let editing_post_value = editing_post();
     let is_edit_post_open = editing_post_value.is_some();
-    let modal_key = editing_post_value
-        .as_ref()
-        .map(|post| format!("edit-{}", post.id))
-        .unwrap_or_else(|| "create".to_string());
+
+    let post_modal_mode = if let Some(post) = editing_post_value.clone() {
+        Some(PostModalMode::Edit(post))
+    } else if is_new_post_open {
+        Some(PostModalMode::Create)
+    } else {
+        None
+    };
+
+    let modal_key = match &post_modal_mode {
+        Some(PostModalMode::Edit(post)) => format!("edit-{}", post.id),
+        Some(PostModalMode::Create) => "create".to_string(),
+        None => String::new(),
+    };
 
     let token = auth().token.clone();
     let is_authenticated = auth().is_authenticated();
@@ -143,12 +154,12 @@ pub fn HomePage() -> Element {
                     }
                 }
 
-                if is_new_post_open || is_edit_post_open {
+                if let Some(mode) = post_modal_mode.clone() {
                     if let Some(token) = token.clone() {
                         PostModal {
                             key: "{modal_key}",
                             token,
-                            post: editing_post_value.clone(),
+                            mode,
                             on_close: move |_| {
                                 show_new_post.set(false);
                                 editing_post.set(None);
@@ -225,6 +236,3 @@ pub fn HomePage() -> Element {
         }
     }
 }
-
-
-

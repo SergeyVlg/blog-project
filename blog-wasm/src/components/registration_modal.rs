@@ -78,6 +78,7 @@ pub(crate) fn RegistrationModal(on_close: EventHandler<()>, on_success: EventHan
                                     );
 
                                     next_auth.user_id = Some(payload.user.id.to_string());
+                                    next_auth.user_name = Some(payload.user.name.clone());
                                     next_auth.token = Some(payload.token);
                                     next_auth.save();
                                     auth.set(next_auth);

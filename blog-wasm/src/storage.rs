@@ -1,5 +1,6 @@
 ﻿pub const BLOG_TOKEN_KEY: &str = "blog_token";
 pub const BLOG_USER_ID_KEY: &str = "blog_user_id";
+pub const BLOG_USER_NAME_KEY: &str = "blog_user_name";
 
 #[cfg(target_arch = "wasm32")]
 fn browser_storage() -> Option<web_sys::Storage> {
@@ -9,6 +10,7 @@ fn browser_storage() -> Option<web_sys::Storage> {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Auth {
     pub user_id: Option<String>,
+    pub user_name: Option<String>,
     pub token: Option<String>,
 }
 
@@ -19,6 +21,7 @@ impl Auth {
             if let Some(storage) = browser_storage() {
                 return Self {
                     user_id: storage.get_item(BLOG_USER_ID_KEY).ok().flatten(),
+                    user_name: storage.get_item(BLOG_USER_NAME_KEY).ok().flatten(),
                     token: storage.get_item(BLOG_TOKEN_KEY).ok().flatten(),
                 };
             }
@@ -48,12 +51,22 @@ impl Auth {
                         let _ = storage.remove_item(BLOG_USER_ID_KEY);
                     }
                 }
+
+                match &self.user_name {
+                    Some(user_name) => {
+                        let _ = storage.set_item(BLOG_USER_NAME_KEY, user_name);
+                    }
+                    None => {
+                        let _ = storage.remove_item(BLOG_USER_NAME_KEY);
+                    }
+                }
             }
         }
     }
 
     pub fn clear(&mut self) {
         self.user_id = None;
+        self.user_name = None;
         self.token = None;
         self.save();
     }

@@ -47,6 +47,7 @@ pub fn HomePage() -> Element {
     };
 
     let token = auth().token.clone();
+    let current_user_name = auth().user_name.clone();
     let is_authenticated = auth().is_authenticated();
 
     let login_action_label = if is_login_open {
@@ -67,11 +68,6 @@ pub fn HomePage() -> Element {
 
                 header {
                     class: "posts-page__header",
-
-                    div {
-                        class: "posts-page__header-title",
-                        h1 { "Посты" }
-                    }
 
                     nav {
                         class: "posts-page__auth-links",
@@ -131,6 +127,15 @@ pub fn HomePage() -> Element {
                     None => rsx! {},
                 }
 
+                if is_authenticated {
+                    if let Some(user_name) = current_user_name.clone() {
+                        p {
+                            class: "posts-page__notice posts-page__notice_success",
+                            "Вы вошли как {user_name}"
+                        }
+                    }
+                }
+
                 if is_login_open {
                     LoginModal {
                         on_close: move |_| {
@@ -152,6 +157,11 @@ pub fn HomePage() -> Element {
                             show_registration.set(false);
                         }
                     }
+                }
+
+                div {
+                    class: "posts-page__header-title",
+                    h1 { "Посты" }
                 }
 
                 if let Some(mode) = post_modal_mode.clone() {

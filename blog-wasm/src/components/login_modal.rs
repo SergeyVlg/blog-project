@@ -71,6 +71,7 @@ pub(crate) fn LoginModal(on_close: EventHandler<()>, on_success: EventHandler<()
                                 Ok(payload) => {
                                     let mut next_auth = auth();
                                     next_auth.user_id = Some(payload.user.id.to_string());
+                                    next_auth.user_name = Some(payload.user.name);
                                     next_auth.token = Some(payload.token);
                                     next_auth.save();
                                     auth.set(next_auth);

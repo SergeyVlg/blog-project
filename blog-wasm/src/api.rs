@@ -1,4 +1,4 @@
-﻿use blog_client::dto::{CreatePostRequest, LoginRequest, RegisterRequest, UserWithToken};
+﻿use blog_client::dto::{CreatePostRequest, LoginRequest, RegisterRequest, UpdatePostRequest, UserWithToken};
 use blog_client::{GetPostsResponse, Post};
 use gloo_net::http::Request;
 
@@ -72,7 +72,6 @@ pub async fn login_user(name: String, password: String) -> Result<UserWithToken,
 }
 
 pub async fn create_post(token: String, title: String, content: String) -> Result<Post, String> {
-
     let response = Request::post(&format!("{API_BASE_URL}{CREATE_POST_PATH}"))
         .header("Authorization", &format!("Bearer {token}"))
         .json(&CreatePostRequest { title, content })
@@ -91,6 +90,33 @@ pub async fn create_post(token: String, title: String, content: String) -> Resul
         };
 
         return Err(format!("Не удалось создать пост: {message}"));
+    }
+
+    response
+        .json::<Post>()
+        .await
+        .map_err(|error| format!("Не удалось разобрать ответ сервера: {error}"))
+}
+
+pub async fn update_post(token: String, post_id: String, title: String, content: String) -> Result<Post, String> {
+    let response = Request::put(&format!("{API_BASE_URL}{CREATE_POST_PATH}/{post_id}"))
+        .header("Authorization", &format!("Bearer {token}"))
+        .json(&UpdatePostRequest { title, content })
+        .map_err(|error| format!("Не удалось подготовить запрос обновления поста: {error}"))?
+        .send()
+        .await
+        .map_err(|error| format!("Не удалось выполнить запрос обновления поста: {error}"))?;
+
+    if !response.ok() {
+        let status = response.status();
+        let details = response.text().await.unwrap_or_default();
+        let message = if details.trim().is_empty() {
+            format!("код ответа {status}")
+        } else {
+            details
+        };
+
+        return Err(format!("Не удалось обновить пост: {message}"));
     }
 
     response

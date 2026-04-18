@@ -1,10 +1,11 @@
 ﻿use dioxus::prelude::*;
+use blog_client::Post;
 
 use crate::api::fetch_posts;
 use crate::storage;
 
 use super::login_modal::LoginModal;
-use super::post_modal::CreatePostModal;
+use super::post_modal::PostModal;
 use super::post_card::PostCard;
 use super::registration_modal::RegistrationModal;
 
@@ -18,6 +19,7 @@ pub fn HomePage() -> Element {
     let mut show_login = use_signal(|| false);
     let mut show_registration = use_signal(|| false);
     let mut show_new_post = use_signal(|| false);
+    let mut editing_post = use_signal(|| Option::<Post>::None);
     let mut registration_success = use_signal(|| Option::<String>::None);
     let mut auth = use_signal(storage::Auth::new);
 
@@ -26,6 +28,12 @@ pub fn HomePage() -> Element {
     let is_login_open = show_login();
     let is_registration_open = show_registration();
     let is_new_post_open = show_new_post();
+    let editing_post_value = editing_post();
+    let is_edit_post_open = editing_post_value.is_some();
+    let modal_key = editing_post_value
+        .as_ref()
+        .map(|post| format!("edit-{}", post.id))
+        .unwrap_or_else(|| "create".to_string());
 
     let token = auth().token.clone();
     let is_authenticated = auth().is_authenticated();
@@ -68,6 +76,7 @@ pub fn HomePage() -> Element {
                                     show_login.set(false);
                                     show_registration.set(false);
                                     show_new_post.set(false);
+                                    editing_post.set(None);
                                 },
                                 "Выйти"
                             }
@@ -134,22 +143,26 @@ pub fn HomePage() -> Element {
                     }
                 }
 
-                if is_new_post_open {
+                if is_new_post_open || is_edit_post_open {
                     if let Some(token) = token.clone() {
-                        CreatePostModal {
+                        PostModal {
+                            key: "{modal_key}",
                             token,
+                            post: editing_post_value.clone(),
                             on_close: move |_| {
                                 show_new_post.set(false);
+                                editing_post.set(None);
                             },
                             on_success: move |_| {
                                 show_new_post.set(false);
+                                editing_post.set(None);
                                 posts_reload_key.set(posts_reload_key() + 1);
                             }
                         }
                     }
                 }
 
-                if !is_new_post_open {
+                if !is_new_post_open && !is_edit_post_open {
                     div {
                         class: "posts-page__actions",
 
@@ -164,6 +177,7 @@ pub fn HomePage() -> Element {
                             },
                             onclick: move |_| {
                                 if is_authenticated {
+                                    editing_post.set(None);
                                     show_new_post.set(true);
                                 }
                             },
@@ -183,7 +197,14 @@ pub fn HomePage() -> Element {
                         div {
                             class: "posts-list",
                             for post in response.posts.iter() {
-                                PostCard { key: "{post.id}", post: post.clone() }
+                                PostCard {
+                                    key: "{post.id}",
+                                    post: post.clone(),
+                                    on_edit: move |post: Post| {
+                                        show_new_post.set(false);
+                                        editing_post.set(Some(post));
+                                    }
+                                }
                             },
                         }
                     },

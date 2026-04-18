@@ -62,6 +62,12 @@ body {
     cursor: not-allowed;
 }
 
+.posts-page__auth-status {
+    color: #344054;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 .posts-page__notice {
     margin: 0 0 24px;
     padding: 14px 16px;

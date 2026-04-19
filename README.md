@@ -1,14 +1,11 @@
 # blog-project
 
-Учебный workspace на Rust с несколькими клиентами для одного и того же блога:
+Учебный проект блога на Rust с несколькими клиентами и веб-сервером:
 
 - HTTP + gRPC сервер на `actix-web` и `tonic`
 - общая клиентская библиотека
 - CLI-клиент
 - браузерный WASM-клиент на `Dioxus`
-
-Проект показывает, как построить один backend и несколько способов работы с ним: через `curl`, CLI и web UI.
-
 ---
 
 ## Содержание
@@ -74,7 +71,7 @@ gRPC API описан в `blog-server/proto/blog.proto`.
 Что делает:
 
 - регистрирует и логинит пользователя
-- создаёт, получает, обновляет, удаляет и выводит список постов
+- выводит список постов, а также позволяет создать, отредактировать или удалить пост с проверкой на авторство
 - умеет работать как по HTTP, так и по gRPC
 - сохраняет токен в локальный файл `.blog_token`
 
@@ -153,7 +150,7 @@ blog-server  ---> PostgreSQL
 
 - `http_handlers/public.rs` — публичные HTTP endpoints
 - `http_handlers/protected.rs` — защищённые HTTP endpoints
-- `middleware.rs` — JWT middleware для HTTP
+- `middleware.rs` — JWT middleware для HTTP и логирование ошибок middleware
 - `grpc_service.rs` — gRPC-реализация сервиса
 - `proto.rs` — сгенерированные gRPC-типы
 
@@ -202,12 +199,7 @@ blog-server  ---> PostgreSQL
 
 ### Управление зависимостями в workspace
 
-Часть повторяющихся зависимостей вынесена в корневой `Cargo.toml` в секцию `[workspace.dependencies]`. Это позволяет:
-
-- хранить версии в одном месте
-- уменьшить дублирование между `blog-server`, `blog-client` и `blog-cli`
-- обновлять общие библиотеки централизованно
-
+Часть повторяющихся зависимостей вынесена в корневой `Cargo.toml` в секцию `[workspace.dependencies]`. 
 Сейчас из workspace наследуются версии для:
 
 - `blog-client`
@@ -221,14 +213,6 @@ blog-server  ---> PostgreSQL
 - `tonic-prost`
 - `tonic-prost-build`
 - `uuid`
-
-Где это используется:
-
-- `blog-server` берёт из workspace общие runtime и build-time зависимости вроде `serde`, `chrono`, `anyhow`, `tonic`, `prost`
-- `blog-client` берёт из workspace общие DTO/gRPC-зависимости и build dependencies
-- `blog-cli` берёт из workspace `blog-client`, `anyhow` и `uuid`
-
-При этом не все зависимости имеет смысл выносить в корень. Например, `actix-web`, `sqlx`, `clap`, `tokio`, `dioxus`, `gloo-net` и `web-sys` остаются локальными для своих крейтов, потому что они либо используются только в одном месте, либо имеют специфичные настройки/features.
 
 Отдельное исключение — `blog-wasm`: он не наследует `blog-client` через `workspace = true`, потому что использует `default-features = false`. Такое переопределение нельзя наложить поверх workspace-наследования, поэтому для wasm-крейта эта зависимость оставлена отдельной строкой в его собственном `Cargo.toml`.
 ---

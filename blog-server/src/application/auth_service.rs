@@ -1,10 +1,9 @@
-﻿use std::sync::Arc;
-use tracing::instrument;
-use crate::data::user_repository::UserRepository;
-use crate::domain::error::{BlogError};
+﻿use crate::data::user_repository::UserRepository;
+use crate::domain::error::BlogError;
 use crate::domain::user::{User, UserWithToken};
-use crate::infrastructure::jwt::{JwtKeys};
 use crate::infrastructure::jwt as jwt;
+use crate::infrastructure::jwt::JwtKeys;
+use tracing::instrument;
 
 #[derive(Clone)]
 pub(crate) struct AuthService<R: UserRepository/* + 'static*/> {
@@ -28,8 +27,7 @@ where
         self.repo
             .find_by_id(id)
             .await
-            .map_err(BlogError::from)?
-            .ok_or_else(|| BlogError::NotFound(format!("user {}", id)))
+            .map_err(BlogError::from)
     }
 
     #[instrument(skip(self))]
@@ -59,8 +57,7 @@ where
             .repo
             .find_by_name(&name.to_lowercase())
             .await
-            .map_err(BlogError::from)?
-            .ok_or_else(|| BlogError::NotFound(format!("User with name {} not found", name)))?;
+            .map_err(BlogError::from)?;
 
         let valid = jwt::verify_password(password, &user.password_hash)
             .map_err(|err| BlogError::Internal(err.to_string()))?;

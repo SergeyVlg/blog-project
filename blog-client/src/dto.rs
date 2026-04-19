@@ -53,14 +53,8 @@ pub struct UpdatePostRequest {
 
 #[derive(Debug, Serialize)]
 pub struct GetPostsRequest {
-    #[serde(default = "GetPostsRequest::set_default_limit")]
     pub limit: u32,
     pub offset: u32,
-}
-
-impl GetPostsRequest {
-    const DEFAULT_LIMIT: u32 = 10;
-    fn set_default_limit() -> u32 { Self::DEFAULT_LIMIT }
 }
 
 #[derive(Debug, Deserialize)]

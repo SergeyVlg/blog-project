@@ -110,6 +110,8 @@ async fn grpc_server(addr: SocketAddr,
         blog_service
     };
 
+    tracing::info!("→ listening grpc on {}", addr);
+
     Server::builder()
         .add_service(BlogServiceServer::new(service))
         .serve(addr)

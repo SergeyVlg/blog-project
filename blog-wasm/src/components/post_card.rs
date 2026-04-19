@@ -8,7 +8,7 @@ pub(crate) fn PostCard(
     post: Post,
     on_edit: EventHandler<Post>,
     on_delete: EventHandler<Post>,
-    show_delete: bool,
+    hide_actions: bool,
     is_deleting: bool,
 ) -> Element {
     let author_id = post.author_id.to_string();
@@ -30,7 +30,7 @@ pub(crate) fn PostCard(
                     "{post.title}"
                 }
 
-                if can_edit {
+                if can_edit && !hide_actions {
                     div {
                         class: "post-card__actions",
 
@@ -42,14 +42,12 @@ pub(crate) fn PostCard(
                             "Редактировать"
                         }
 
-                        if show_delete {
-                            button {
-                                class: "post-card__delete-action",
-                                r#type: "button",
-                                disabled: is_deleting,
-                                onclick: move |_| on_delete.call(deletable_post.clone()),
-                                if is_deleting { "Удаление..." } else { "Удалить" }
-                            }
+                        button {
+                            class: "post-card__delete-action",
+                            r#type: "button",
+                            disabled: is_deleting,
+                            onclick: move |_| on_delete.call(deletable_post.clone()),
+                            if is_deleting { "Удаление..." } else { "Удалить" }
                         }
                     }
                 }

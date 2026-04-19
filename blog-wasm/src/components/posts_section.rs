@@ -21,6 +21,7 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
     let is_new_post_open = show_new_post();
     let editing_post_value = editing_post();
     let is_edit_post_open = editing_post_value.is_some();
+    let is_post_form_open = is_new_post_open || is_edit_post_open;
 
     let post_modal_mode = if let Some(post) = editing_post_value.clone() {
         Some(PostModalMode::Edit(post))
@@ -35,8 +36,6 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
         Some(PostModalMode::Create) => "create".to_string(),
         None => String::new(),
     };
-
-    let current_editing_post_id = editing_post_value.as_ref().map(|post| post.id);
 
     rsx! {
         if let Some(mode) = post_modal_mode.clone() {
@@ -69,7 +68,7 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
             None => rsx! {},
         }
 
-        if !is_new_post_open && !is_edit_post_open {
+        if !is_post_form_open {
             div {
                 class: "posts-page__actions",
 
@@ -108,7 +107,7 @@ pub(crate) fn PostsSection(is_authenticated: bool, token: Option<String>) -> Ele
                         PostCard {
                             key: "{post.id}",
                             post: post.clone(),
-                            show_delete: current_editing_post_id != Some(post.id),
+                            hide_actions: is_post_form_open,
                             is_deleting: deleting_post_id() == Some(post.id.to_string()),
                             on_edit: move |post: Post| {
                                 post_action_error.set(None);

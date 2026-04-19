@@ -6,6 +6,6 @@ edition = "2024"
 [dependencies]
 blog-client.workspace = true
 clap = { version = "4.6.0", features = ["derive"] }
-anyhow = "1.0.102"
+anyhow.workspace = true
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "io-util"] }
-uuid = { version = "1.23.0", features = ["v4"] }
+uuid = { workspace = true, features = ["v4"] }
